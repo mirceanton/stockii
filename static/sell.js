@@ -285,6 +285,13 @@ function confirmQtySale() {
 
 // ---- UI helpers ----
 
+// ---- Collapsible sections ----
+
+function toggleSection(header) {
+    var section = header.closest('.category-section');
+    if (section) section.classList.toggle('collapsed');
+}
+
 function updateCardStockLevel(card, sold, brought) {
     card.classList.remove('stock-plenty', 'stock-low', 'stock-critical', 'stock-sold_out');
     if (brought <= 0) {

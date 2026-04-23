@@ -29,12 +29,14 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 0;
             margin: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .sell-header {
-            position: sticky;
-            top: 0;
+            flex-shrink: 0;
             z-index: 100;
             background: var(--sk-bg-secondary);
             border-bottom: 1px solid var(--sk-border);
@@ -69,8 +71,25 @@
             background: var(--sk-bg-tertiary);
             border-bottom: 1px solid var(--sk-border);
             position: sticky;
-            top: 52px;
+            top: 0;
             z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .collapse-icon {
+            transition: transform 0.2s;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+        .category-section.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        .category-section.collapsed .product-grid {
+            display: none;
         }
         .product-grid {
             display: grid;
@@ -82,8 +101,8 @@
             background: var(--sk-bg-secondary);
             border: 2px solid var(--sk-border);
             border-radius: 8px;
-            padding: 0.75rem;
-            text-align: center;
+            padding: 0;
+            aspect-ratio: 1;
             cursor: pointer;
             transition: all 0.1s;
             user-select: none;
@@ -103,39 +122,45 @@
             opacity: 0.5;
         }
         .product-card .product-img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
         .product-card .product-img-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 4px;
+            position: absolute;
+            inset: 0;
             background: var(--sk-bg-tertiary);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 0.5rem;
+        }
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.10);
+            pointer-events: none;
         }
         .product-card .product-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             font-size: 0.85rem;
             font-weight: 600;
             line-height: 1.2;
-            margin-bottom: 0.25rem;
+            text-align: center;
+            padding: 0.4rem 0.5rem;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6);
         }
         .product-card .product-counter {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-        .product-card .product-price {
-            font-size: 0.75rem;
-            color: var(--sk-text-muted);
+            display: none;
         }
         .sale-flash {
             position: absolute;
@@ -230,10 +255,13 @@
         </div>
     </div>
 
-    <div id="product-list" style="padding-bottom:1rem;">
+    <div id="product-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:1rem;">
         {{range .Groups}}
         <div class="category-section">
-            <div class="category-header">{{.Name}}</div>
+            <div class="category-header" onclick="toggleSection(this)">
+                <span>{{.Name}}</span>
+                <i class="bi bi-chevron-down collapse-icon"></i>
+            </div>
             <div class="product-grid">
                 {{range .Products}}
                 {{template "product_card" .}}
@@ -286,12 +314,10 @@
     {{if hasImage .Product.ImagePath}}
     <img src="/images/{{.Product.ImagePath}}" class="product-img" alt="">
     {{else}}
-    <div class="product-img-placeholder"><i class="bi bi-image text-muted"></i></div>
+    <div class="product-img-placeholder"><i class="bi bi-image text-muted" style="font-size:2rem;"></i></div>
     {{end}}
+    <div class="card-overlay"></div>
     <div class="product-name">{{.Product.Name}}</div>
-    <div class="product-counter">
-        <span class="sold-count">{{.QtySold}}</span> / {{.ConventionProduct.QtyBrought}}
-    </div>
-    <div class="product-price">{{formatMoney .ConventionProduct.SalePrice}} ea</div>
+    <span class="sold-count" style="display:none;">{{.QtySold}}</span>
 </div>
 {{end}}
