@@ -1,0 +1,65 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-plus me-2"></i>{{if .Convention}}Edit Convention{{else}}New Convention{{end}}</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form {{if .Convention}}hx-put="/api/conventions/{{.Convention.ID}}"{{else}}hx-post="/api/conventions"{{end}} hx-swap="none">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Convention Series</label>
+                    <select name="series_id" class="form-select" required>
+                        <option value="">Select series...</option>
+                        {{$conv := .Convention}}
+                        {{range .Series}}
+                        <option value="{{.ID}}" {{if and $conv (eq $conv.ConventionSeriesID .ID)}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                    <small class="text-muted-sk">Don't see your series? <a href="/settings" style="color:var(--sk-accent);">Add it in Settings</a></small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Name <small class="text-muted-sk">(auto-generated if empty)</small></label>
+                    <input type="text" name="name" class="form-control" value="{{if .Convention}}{{.Convention.Name}}{{end}}" placeholder="e.g., Comic Con - Spring 2026">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-control" value="{{if .Convention}}{{.Convention.Location}}{{end}}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="mixed" {{if and .Convention (eq .Convention.Type "mixed")}}selected{{end}}>Mixed</option>
+                        <option value="fanart" {{if and .Convention (eq .Convention.Type "fanart")}}selected{{end}}>Fanart</option>
+                        <option value="original" {{if and .Convention (eq .Convention.Type "original")}}selected{{end}}>Original</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="date_start" class="form-control" value="{{if .Convention}}{{.Convention.DateStart.Format "2006-01-02"}}{{end}}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="date_end" class="form-control" value="{{if .Convention}}{{.Convention.DateEnd.Format "2006-01-02"}}{{end}}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Table Cost</label>
+                    <input type="number" name="table_cost" class="form-control" step="0.01" min="0" value="{{if .Convention}}{{formatMoney .Convention.TableCost}}{{else}}0{{end}}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Prep Cost</label>
+                    <input type="number" name="prep_cost" class="form-control" step="0.01" min="0" value="{{if .Convention}}{{formatMoney .Convention.PrepCost}}{{else}}0{{end}}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" class="form-control" rows="3">{{if .Convention}}{{.Convention.Notes}}{{end}}</textarea>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-sk"><i class="bi bi-check-lg me-1"></i>{{if .Convention}}Update{{else}}Create{{end}} Convention</button>
+                    <a href="/conventions" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,9 @@
+{
+    "name": "Stockii",
+    "short_name": "Stockii",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1d23",
+    "theme_color": "#e8a043",
+    "icons": []
+}

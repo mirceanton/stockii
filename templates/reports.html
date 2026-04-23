@@ -1,0 +1,119 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart-line me-2"></i>Reports</h1>
+</div>
+
+<!-- Convention P&L -->
+<div class="card mb-4">
+    <div class="card-header">Convention P&L</div>
+    {{if .PnLs}}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Convention</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th class="text-end">Revenue</th>
+                    <th class="text-end">Costs</th>
+                    <th class="text-end">Profit</th>
+                    <th class="text-end">ROI</th>
+                    <th class="text-end">Sold / Brought</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .PnLs}}
+                <tr>
+                    <td><a href="/conventions/{{.Convention.ID}}" style="color:var(--sk-accent);text-decoration:none;">{{.Convention.Name}}</a></td>
+                    <td>{{.Convention.DateStart.Format "Jan 2, 2006"}}</td>
+                    <td><span class="badge badge-type-{{.Convention.Type}}">{{conventionTypeLabel .Convention.Type}}</span></td>
+                    <td class="text-end">{{formatMoney .TotalRevenue}}</td>
+                    <td class="text-end">{{formatMoney .TotalCost}}</td>
+                    <td class="text-end {{if gt .Profit 0.0}}text-success{{else if lt .Profit 0.0}}text-danger{{end}} fw-bold">{{formatMoney .Profit}}</td>
+                    <td class="text-end">{{formatPct .ROI}}%</td>
+                    <td class="text-end">{{.TotalSold}} / {{.TotalBrought}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="card-body empty-state">
+        <i class="bi bi-bar-chart"></i>
+        <p>No convention data yet.</p>
+    </div>
+    {{end}}
+</div>
+
+<div class="row g-4">
+    <!-- Category Breakdown -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Sales by Category</div>
+            {{if .CategoryReport}}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-end">Sold / Brought</th>
+                            <th class="text-end">Sell-Through</th>
+                            <th class="text-end">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .CategoryReport}}
+                        <tr>
+                            <td>{{index . "category"}}</td>
+                            <td class="text-end">{{index . "totalSold"}} / {{index . "totalBrought"}}</td>
+                            <td class="text-end">{{printf "%.1f" (index . "sellThrough")}}%</td>
+                            <td class="text-end">{{printf "%.2f" (index . "totalRevenue")}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body empty-state">
+                <p>No category data yet.</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <!-- Fandom Breakdown -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Sales by Fandom / Type</div>
+            {{if .FandomReport}}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fandom</th>
+                            <th class="text-end">Sold / Brought</th>
+                            <th class="text-end">Sell-Through</th>
+                            <th class="text-end">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .FandomReport}}
+                        <tr>
+                            <td>{{index . "fandom"}}</td>
+                            <td class="text-end">{{index . "totalSold"}} / {{index . "totalBrought"}}</td>
+                            <td class="text-end">{{printf "%.1f" (index . "sellThrough")}}%</td>
+                            <td class="text-end">{{printf "%.2f" (index . "totalRevenue")}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="card-body empty-state">
+                <p>No fandom data yet.</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{end}}

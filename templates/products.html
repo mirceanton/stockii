@@ -1,0 +1,63 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-box-seam me-2"></i>Products</h1>
+    <div class="d-flex gap-2 align-items-center">
+        <a href="/products?archived={{if .ShowArchived}}0{{else}}1{{end}}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-archive me-1"></i>{{if .ShowArchived}}Hide Archived{{else}}Show Archived{{end}}
+        </a>
+        <a href="/products/new" class="btn btn-sk"><i class="bi bi-plus-lg me-1"></i>New Product</a>
+    </div>
+</div>
+
+{{if .Products}}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Fandom</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Products}}
+                <tr class="clickable-row{{if .Archived}} opacity-50{{end}}" onclick="window.location='/products/{{.ID}}'">
+                    <td>
+                        {{if hasImage .ImagePath}}
+                        <img src="/images/{{.ImagePath}}" class="product-thumb" alt="">
+                        {{else}}
+                        <div class="product-thumb d-flex align-items-center justify-content-center" style="background:var(--sk-bg-tertiary)"><i class="bi bi-image text-muted-sk"></i></div>
+                        {{end}}
+                    </td>
+                    <td>
+                        <strong>{{.Name}}</strong>
+                        {{if .Archived}}<span class="badge bg-secondary ms-1">Archived</span>{{end}}
+                    </td>
+                    <td>{{.Category.Name}}</td>
+                    <td><span class="badge badge-type-{{.Type}}">{{productTypeLabel .Type}}</span></td>
+                    <td>{{if .Fandom}}{{.Fandom.Name}}{{else}}<span class="text-muted-sk">-</span>{{end}}</td>
+                    <td class="text-end">
+                        <a href="/products/{{.ID}}/edit" class="btn btn-outline-sk btn-sm" onclick="event.stopPropagation()"><i class="bi bi-pencil"></i></a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{else}}
+<div class="empty-state">
+    <i class="bi bi-box-seam"></i>
+    {{if .ShowArchived}}
+    <p>No products found.</p>
+    {{else}}
+    <p>No products yet. Add your first one!</p>
+    {{end}}
+    <a href="/products/new" class="btn btn-sk">Add Product</a>
+</div>
+{{end}}
+{{end}}

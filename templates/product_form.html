@@ -1,0 +1,67 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-box-seam me-2"></i>{{if .Product}}Edit Product{{else}}New Product{{end}}</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form {{if .Product}}hx-put="/api/products/{{.Product.ID}}"{{else}}hx-post="/api/products"{{end}} hx-swap="none" hx-encoding="multipart/form-data">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" class="form-control" value="{{if .Product}}{{.Product.Name}}{{end}}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Category</label>
+                    <select name="category_id" class="form-select" required>
+                        <option value="">Select category...</option>
+                        {{$prod := .Product}}
+                        {{range .Categories}}
+                        <option value="{{.ID}}" {{if and $prod (eq $prod.CategoryID .ID)}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select" id="product-type" onchange="toggleFandom()">
+                        <option value="original" {{if and .Product (eq .Product.Type "original")}}selected{{end}}>Original</option>
+                        <option value="fanart" {{if and .Product (eq .Product.Type "fanart")}}selected{{end}}>Fanart</option>
+                    </select>
+                </div>
+                <div class="col-md-6" id="fandom-group" style="{{if or (not .Product) (eq .Product.Type "original")}}display:none{{end}}">
+                    <label class="form-label">Fandom</label>
+                    <select name="fandom_id" class="form-select">
+                        <option value="">Select fandom...</option>
+                        {{range .Fandoms}}
+                        <option value="{{.ID}}" {{if and $prod $prod.FandomID (eq (derefUint $prod.FandomID) .ID)}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                    <small class="text-muted-sk"><a href="/settings" style="color:var(--sk-accent);">Manage fandoms in Settings</a></small>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Product Image</label>
+                    {{if and .Product (hasImage .Product.ImagePath)}}
+                    <div class="mb-2">
+                        <img src="/images/{{.Product.ImagePath}}" class="product-thumb-lg" alt="">
+                    </div>
+                    {{end}}
+                    <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-sk"><i class="bi bi-check-lg me-1"></i>{{if .Product}}Update{{else}}Create{{end}} Product</button>
+                    <a href="/products" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function toggleFandom() {
+    var type = document.getElementById('product-type').value;
+    document.getElementById('fandom-group').style.display = type === 'fanart' ? '' : 'none';
+}
+</script>
+{{end}}

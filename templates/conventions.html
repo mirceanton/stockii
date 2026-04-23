@@ -1,0 +1,51 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-event me-2"></i>Conventions</h1>
+    <a href="/conventions/new" class="btn btn-sk"><i class="bi bi-plus-lg me-1"></i>New Convention</a>
+</div>
+
+{{if .Conventions}}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Series</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th class="text-end">Revenue</th>
+                    <th class="text-end">Profit</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Conventions}}
+                <tr class="clickable-row" onclick="window.location='/conventions/{{.ID}}'">
+                    <td><strong>{{.Name}}</strong></td>
+                    <td class="text-muted-sk">{{.ConventionSeries.Name}}</td>
+                    <td>{{.DateStart.Format "Jan 2, 2006"}}</td>
+                    <td>{{.Location}}</td>
+                    <td><span class="badge badge-type-{{.Type}}">{{conventionTypeLabel .Type}}</span></td>
+                    <td class="text-end">{{formatMoney .Revenue}}</td>
+                    <td class="text-end {{if gt .Profit 0.0}}text-success{{else if lt .Profit 0.0}}text-danger{{end}}">{{formatMoney .Profit}}</td>
+                    <td class="text-end">
+                        <a href="/conventions/{{.ID}}/sell" class="btn btn-outline-sk btn-sm" onclick="event.stopPropagation()">
+                            <i class="bi bi-cart-plus"></i> Sell
+                        </a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{else}}
+<div class="empty-state">
+    <i class="bi bi-calendar-x"></i>
+    <p>No conventions yet. Create your first one!</p>
+    <a href="/conventions/new" class="btn btn-sk">Add Convention</a>
+</div>
+{{end}}
+{{end}}

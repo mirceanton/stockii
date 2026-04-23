@@ -1,0 +1,95 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-grid-1x2 me-2"></i>Dashboard</h1>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{.Stats.TotalProducts}}</div>
+            <div class="stat-label">Products</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{.Stats.TotalConventions}}</div>
+            <div class="stat-label">Conventions</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{formatMoney .Stats.TotalRevenue}}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{formatPct .Stats.AvgSellThroughRate}}%</div>
+            <div class="stat-label">Avg Sell-Through</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-plus me-1"></i>Upcoming Conventions
+            </div>
+            <div class="card-body">
+                {{if .Upcoming}}
+                <div class="list-group list-group-flush">
+                    {{range .Upcoming}}
+                    <a href="/conventions/{{.ID}}" class="list-group-item list-group-item-action" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{.Name}}</strong>
+                                <br><small class="text-muted-sk">{{.Location}} &middot; {{.DateStart.Format "Jan 2, 2006"}}</small>
+                            </div>
+                            <span class="badge badge-type-{{.Type}}">{{conventionTypeLabel .Type}}</span>
+                        </div>
+                    </a>
+                    {{end}}
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <i class="bi bi-calendar-x"></i>
+                    <p>No upcoming conventions</p>
+                    <a href="/conventions/new" class="btn btn-sk btn-sm">Add Convention</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-1"></i>Recent Conventions
+            </div>
+            <div class="card-body">
+                {{if .RecentPnLs}}
+                <div class="list-group list-group-flush">
+                    {{range .RecentPnLs}}
+                    <div class="list-group-item" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{.Name}}</strong>
+                            <div class="text-end">
+                                <span class="{{if gt .Profit 0.0}}text-success{{else}}text-danger{{end}} fw-bold">{{formatMoney .Profit}}</span>
+                                <br><small class="text-muted-sk">ROI: {{formatPct .ROI}}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <i class="bi bi-clock"></i>
+                    <p>No past conventions yet</p>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

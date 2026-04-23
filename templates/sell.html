@@ -1,0 +1,297 @@
+{{define "sell_page"}}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sell - {{.Convention.Name}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        :root {
+            --sk-bg-primary: #1a1d23;
+            --sk-bg-secondary: #22262e;
+            --sk-bg-tertiary: #2a2f38;
+            --sk-accent: #9a61db;
+            --sk-text-primary: #e1e4e8;
+            --sk-text-muted: #8b949e;
+            --sk-border: #333842;
+            --sk-success: #3fb950;
+            --sk-warning: #d29922;
+            --sk-danger: #f85149;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--sk-bg-primary);
+            color: var(--sk-text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .sell-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--sk-bg-secondary);
+            border-bottom: 1px solid var(--sk-border);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sell-header h1 {
+            font-size: 1.1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.6em;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .status-online { background: var(--sk-success); color: #000; }
+        .status-offline { background: var(--sk-warning); color: #000; }
+        .category-section {
+            margin-bottom: 0.5rem;
+        }
+        .category-header {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sk-text-muted);
+            background: var(--sk-bg-tertiary);
+            border-bottom: 1px solid var(--sk-border);
+            position: sticky;
+            top: 52px;
+            z-index: 50;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+        .product-card {
+            background: var(--sk-bg-secondary);
+            border: 2px solid var(--sk-border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card:active {
+            transform: scale(0.96);
+            border-color: var(--sk-accent);
+        }
+        .product-card.stock-plenty { border-left: 4px solid var(--sk-success); }
+        .product-card.stock-low { border-left: 4px solid var(--sk-warning); }
+        .product-card.stock-critical { border-left: 4px solid var(--sk-danger); }
+        .product-card.stock-sold_out {
+            border-left: 4px solid #666;
+            opacity: 0.5;
+        }
+        .product-card .product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .product-card .product-img-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            background: var(--sk-bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+        }
+        .product-card .product-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .product-card .product-counter {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .product-card .product-price {
+            font-size: 0.75rem;
+            color: var(--sk-text-muted);
+        }
+        .sale-flash {
+            position: absolute;
+            inset: 0;
+            background: rgba(154, 97, 219, 0.35);
+            pointer-events: none;
+            animation: flashFade 0.4s ease-out forwards;
+        }
+        @keyframes flashFade { to { opacity: 0; } }
+        .qty-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qty-modal {
+            background: var(--sk-bg-secondary);
+            border: 1px solid var(--sk-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 280px;
+            text-align: center;
+        }
+        .qty-modal input {
+            font-size: 2rem;
+            text-align: center;
+            width: 100%;
+            background: var(--sk-bg-tertiary);
+            border: 1px solid var(--sk-border);
+            color: var(--sk-text-primary);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 1rem 0;
+        }
+        .product-card.tap-primed {
+            border-color: var(--sk-accent);
+            box-shadow: 0 0 0 2px rgba(154, 97, 219, 0.35);
+        }
+        .snackbar {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--sk-bg-tertiary);
+            border: 1px solid var(--sk-border);
+            color: var(--sk-text-primary);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 150;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            animation: snackIn 0.2s ease-out;
+            max-width: 90vw;
+        }
+        .snackbar .undo-btn {
+            background: none;
+            border: none;
+            color: var(--sk-accent);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0;
+            white-space: nowrap;
+        }
+        @keyframes snackIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .product-card.tap-primed {
+            border-color: var(--sk-accent);
+            box-shadow: 0 0 0 2px rgba(154, 97, 219, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="sell-header">
+        <div>
+            <a href="/conventions/{{.Convention.ID}}" style="color:var(--sk-text-muted);text-decoration:none;font-size:0.85rem;">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <h1>{{.Convention.Name}}</h1>
+        </div>
+        <div style="display:flex;gap:0.4rem;align-items:center;">
+            <span id="status-badge" class="status-badge status-online">Online</span>
+            <span id="sync-badge" class="status-badge" style="background:var(--sk-success);color:#000;">Synced</span>
+        </div>
+    </div>
+
+    <div id="product-list" style="padding-bottom:1rem;">
+        {{range .Groups}}
+        <div class="category-section">
+            <div class="category-header">{{.Name}}</div>
+            <div class="product-grid">
+                {{range .Products}}
+                {{template "product_card" .}}
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        {{if not .Groups}}
+        <div style="text-align:center;padding:3rem;color:var(--sk-text-muted);">
+            <i class="bi bi-box-seam" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
+            <p>No products in this convention. Add products first!</p>
+            <a href="/conventions/{{.Convention.ID}}" class="btn btn-sm" style="background:var(--sk-accent);color:#fff;">Go Back</a>
+        </div>
+        {{end}}
+    </div>
+
+    <!-- Quantity Modal (hidden) -->
+    <div id="qty-modal" class="qty-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeQtyModal()">
+        <div class="qty-modal">
+            <h5 id="qty-modal-title">Add Sale</h5>
+            <input type="number" id="qty-input" min="1" value="1" inputmode="numeric">
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary flex-fill" onclick="closeQtyModal()">Cancel</button>
+                <button class="btn flex-fill" style="background:var(--sk-accent);color:#fff;font-weight:600;" onclick="confirmQtySale()">Add Sale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snackbar container -->
+    <div id="snackbar-container"></div>
+
+    <script src="/static/sell.js"></script>
+    <script>
+        initSellPage({{.Convention.ID}});
+    </script>
+</body>
+</html>
+{{end}}
+
+{{define "product_card"}}
+<div class="product-card stock-{{.StockLevel}}"
+     id="card-{{.ID}}"
+     data-cp-id="{{.ID}}"
+     data-conv-id="{{.ConventionProduct.ConventionID}}"
+     data-product-name="{{.Product.Name}}"
+     data-qty-sold="{{.QtySold}}"
+     data-qty-brought="{{.ConventionProduct.QtyBrought}}"
+     data-price="{{.ConventionProduct.SalePrice}}">
+    {{if hasImage .Product.ImagePath}}
+    <img src="/images/{{.Product.ImagePath}}" class="product-img" alt="">
+    {{else}}
+    <div class="product-img-placeholder"><i class="bi bi-image text-muted"></i></div>
+    {{end}}
+    <div class="product-name">{{.Product.Name}}</div>
+    <div class="product-counter">
+        <span class="sold-count">{{.QtySold}}</span> / {{.ConventionProduct.QtyBrought}}
+    </div>
+    <div class="product-price">{{formatMoney .ConventionProduct.SalePrice}} ea</div>
+</div>
+{{end}}

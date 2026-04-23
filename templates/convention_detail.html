@@ -1,0 +1,138 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-event me-2"></i>{{.Convention.Name}}</h1>
+    <div class="d-flex gap-2">
+        <a href="/conventions/{{.Convention.ID}}/sell" class="btn btn-sk"><i class="bi bi-cart-plus me-1"></i>Sell Mode</a>
+        <a href="/conventions/{{.Convention.ID}}/edit" class="btn btn-outline-sk"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <button class="btn btn-outline-danger btn-sm" hx-delete="/api/conventions/{{.Convention.ID}}" hx-confirm="Delete this convention and all its data?" hx-swap="none"><i class="bi bi-trash"></i></button>
+    </div>
+</div>
+
+<!-- Convention Info -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Convention Details</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p><strong>Series:</strong> {{.Convention.ConventionSeries.Name}}</p>
+                        <p><strong>Location:</strong> {{.Convention.Location}}</p>
+                        <p><strong>Type:</strong> <span class="badge badge-type-{{.Convention.Type}}">{{conventionTypeLabel .Convention.Type}}</span></p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p><strong>Start:</strong> {{.Convention.DateStart.Format "Jan 2, 2006"}}</p>
+                        <p><strong>End:</strong> {{.Convention.DateEnd.Format "Jan 2, 2006"}}</p>
+                        {{if .Convention.Notes}}<p><strong>Notes:</strong> {{.Convention.Notes}}</p>{{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">P&L Summary</div>
+            <div class="card-body">
+                {{if .PnL}}
+                <p><strong>Revenue:</strong> <span class="text-success">{{formatMoney .PnL.TotalRevenue}}</span></p>
+                <p><strong>Table Cost:</strong> {{formatMoney .Convention.TableCost}}</p>
+                <p><strong>Prep Cost:</strong> {{formatMoney .Convention.PrepCost}}</p>
+                <hr style="border-color:var(--sk-border)">
+                <p><strong>Profit:</strong> <span class="{{if gt .PnL.Profit 0.0}}text-success{{else}}text-danger{{end}} fw-bold">{{formatMoney .PnL.Profit}}</span></p>
+                <p><strong>ROI:</strong> {{formatPct .PnL.ROI}}%</p>
+                <p class="text-muted-sk">{{.PnL.TotalSold}} / {{.PnL.TotalBrought}} items sold</p>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Form -->
+{{if .AvailableProducts}}
+<div class="card mb-4">
+    <div class="card-header">Add Product to Convention</div>
+    <div class="card-body">
+        <form hx-post="/api/conventions/{{.Convention.ID}}/products" hx-swap="none">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Product</label>
+                    <select name="product_id" class="form-select" required>
+                        <option value="">Select product...</option>
+                        {{range .AvailableProducts}}
+                        <option value="{{.ID}}">{{.Name}} ({{.Category.Name}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Qty Brought</label>
+                    <input type="number" name="qty_brought" class="form-control" min="0" value="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sale Price</label>
+                    <input type="number" name="sale_price" class="form-control" step="0.01" min="0" value="0" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sk w-100"><i class="bi bi-plus-lg"></i> Add</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-header">Inventory &amp; Sales</div>
+    {{if .Products}}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-end">Brought</th>
+                    <th class="text-end">Sold</th>
+                    <th class="text-end">Sell-Through</th>
+                    <th class="text-end">Revenue</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Products}}
+                <tr>
+                    <td>
+                        {{if hasImage .Product.ImagePath}}
+                        <img src="/images/{{.Product.ImagePath}}" class="product-thumb" alt="">
+                        {{else}}
+                        <div class="product-thumb d-flex align-items-center justify-content-center" style="background:var(--sk-bg-tertiary)"><i class="bi bi-image text-muted-sk"></i></div>
+                        {{end}}
+                    </td>
+                    <td><a href="/products/{{.Product.ID}}" style="color:var(--sk-accent);text-decoration:none;">{{.Product.Name}}</a></td>
+                    <td class="text-muted-sk">{{.Product.Category.Name}}</td>
+                    <td class="text-end">{{formatMoney .SalePrice}}</td>
+                    <td class="text-end">{{.QtyBrought}}</td>
+                    <td class="text-end">{{.QtySold}}</td>
+                    <td class="text-end">{{formatPct .SellThroughRate}}%</td>
+                    <td class="text-end">{{formatMoney .Revenue}}</td>
+                    <td><span class="badge {{stockBgClass .StockLevel}}">{{.StockLevel}}</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-danger btn-sm" hx-delete="/api/convention-products/{{.ID}}" hx-confirm="Remove this product?" hx-swap="none">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="card-body empty-state">
+        <i class="bi bi-box-seam"></i>
+        <p>No products added to this convention yet.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
