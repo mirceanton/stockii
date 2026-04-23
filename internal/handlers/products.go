@@ -224,7 +224,12 @@ func ArchiveProductHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Redirect", fmt.Sprintf("/products/%d", id))
+	// If called from the product detail/edit page, redirect back there; otherwise go to list.
+	if strings.Contains(r.Header.Get("HX-Current-URL"), fmt.Sprintf("/products/%d", id)) {
+		w.Header().Set("HX-Redirect", fmt.Sprintf("/products/%d", id))
+	} else {
+		w.Header().Set("HX-Redirect", "/products")
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -240,7 +245,12 @@ func UnarchiveProductHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Redirect", fmt.Sprintf("/products/%d", id))
+	// If called from the product detail/edit page, redirect back there; otherwise go to list.
+	if strings.Contains(r.Header.Get("HX-Current-URL"), fmt.Sprintf("/products/%d", id)) {
+		w.Header().Set("HX-Redirect", fmt.Sprintf("/products/%d", id))
+	} else {
+		w.Header().Set("HX-Redirect", "/products")
+	}
 	w.WriteHeader(http.StatusOK)
 }
 

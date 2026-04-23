@@ -336,6 +336,7 @@ func GetProductHistory(productID uint) ([]models.ProductHistory, error) {
 		}
 		history[i] = models.ProductHistory{
 			Product:         cp.Product,
+			ConventionID:    cp.Convention.ID,
 			ConventionName:  cp.Convention.Name,
 			ConventionDate:  cp.Convention.DateStart,
 			QtyBrought:      cp.QtyBrought,

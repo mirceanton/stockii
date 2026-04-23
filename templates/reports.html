@@ -8,17 +8,17 @@
     <div class="card-header">Convention P&L</div>
     {{if .PnLs}}
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" id="pnl-table">
             <thead>
                 <tr>
-                    <th>Convention</th>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th class="text-end">Revenue</th>
-                    <th class="text-end">Costs</th>
-                    <th class="text-end">Profit</th>
-                    <th class="text-end">ROI</th>
-                    <th class="text-end">Sold / Brought</th>
+                    <th class="sk-sortable">Convention <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable">Date <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable">Type <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Revenue <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Costs <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Profit <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">ROI <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Sold / Brought <span class="sk-sort-icon">↕</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -52,13 +52,13 @@
             <div class="card-header">Sales by Category</div>
             {{if .CategoryReport}}
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="category-table">
                     <thead>
                         <tr>
-                            <th>Category</th>
-                            <th class="text-end">Sold / Brought</th>
-                            <th class="text-end">Sell-Through</th>
-                            <th class="text-end">Revenue</th>
+                            <th class="sk-sortable">Category <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sold / Brought <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sell-Through <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Revenue <span class="sk-sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,13 +87,13 @@
             <div class="card-header">Sales by Fandom / Type</div>
             {{if .FandomReport}}
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="fandom-table">
                     <thead>
                         <tr>
-                            <th>Fandom</th>
-                            <th class="text-end">Sold / Brought</th>
-                            <th class="text-end">Sell-Through</th>
-                            <th class="text-end">Revenue</th>
+                            <th class="sk-sortable">Fandom <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sold / Brought <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sell-Through <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Revenue <span class="sk-sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,4 +116,12 @@
         </div>
     </div>
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+skInitSortable('pnl-table');
+skInitSortable('category-table');
+skInitSortable('fandom-table');
+</script>
 {{end}}

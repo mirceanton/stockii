@@ -190,6 +190,9 @@
         .badge-type-original { background-color: #3b82f6; }
         .badge-type-mixed { background-color: #6b7280; }
         .text-muted-sk { color: var(--sk-text-muted) !important; }
+        .sk-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        .sk-sortable:hover { color: var(--sk-text-primary) !important; }
+        .sk-sort-icon { color: var(--sk-text-muted); margin-left: 0.2rem; font-size: 0.75em; }
         .product-thumb {
             width: 40px;
             height: 40px;
@@ -245,6 +248,35 @@
     <div id="sk-toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;min-width:320px;max-width:420px;"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+    function skInitSortable(tableId) {
+        var table = document.getElementById(tableId);
+        if (!table) return;
+        var tbody = table.querySelector('tbody');
+        var sortCol = -1, sortDir = 1;
+        table.querySelectorAll('thead th.sk-sortable').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var allThs = Array.from(table.querySelectorAll('thead th'));
+                var colIdx = allThs.indexOf(th);
+                if (sortCol === colIdx) { sortDir *= -1; } else { sortCol = colIdx; sortDir = 1; }
+                table.querySelectorAll('thead th.sk-sortable .sk-sort-icon').forEach(function(ic) { ic.textContent = '↕'; });
+                var icon = th.querySelector('.sk-sort-icon');
+                if (icon) icon.textContent = sortDir === 1 ? '↑' : '↓';
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function(a, b) {
+                    var av = (a.cells[colIdx] ? a.cells[colIdx].textContent.trim() : '');
+                    var bv = (b.cells[colIdx] ? b.cells[colIdx].textContent.trim() : '');
+                    var an = parseFloat(av.replace(/[^0-9.\-]/g, ''));
+                    var bn = parseFloat(bv.replace(/[^0-9.\-]/g, ''));
+                    if (!isNaN(an) && !isNaN(bn) && av !== '' && bv !== '') return (an - bn) * sortDir;
+                    var ad = new Date(av), bd = new Date(bv);
+                    if (!isNaN(ad) && !isNaN(bd) && av.length > 4) return (ad - bd) * sortDir;
+                    return av.localeCompare(bv) * sortDir;
+                });
+                rows.forEach(function(r) { tbody.appendChild(r); });
+            });
+        });
+    }
+
     function showToast(message, type) {
         var container = document.getElementById('sk-toast-container');
         if (!container) return;
