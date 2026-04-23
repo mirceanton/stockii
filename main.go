@@ -74,6 +74,7 @@ func main() {
 	r.Get("/conventions/new", handlers.ConventionFormHandler)
 	r.Get("/conventions/{id}", handlers.ConventionDetailHandler)
 	r.Get("/conventions/{id}/edit", handlers.ConventionFormHandler)
+	r.Get("/conventions/{id}/sales", handlers.ConventionSalesHandler)
 	r.Get("/conventions/{id}/sell", handlers.SellHandler)
 	r.Get("/products", handlers.ProductsHandler)
 	r.Get("/products/new", handlers.ProductFormHandler)
@@ -95,6 +96,7 @@ func main() {
 	// API - Sales
 	r.Post("/api/conventions/{id}/sales", handlers.RecordSaleHandler)
 	r.Post("/api/conventions/{id}/sales/bulk", handlers.BulkSyncSalesHandler)
+	r.Put("/api/sales/{id}", handlers.UpdateSaleHandler)
 	r.Delete("/api/sales/{id}", handlers.UndoSaleHandler)
 
 	// API - Products
