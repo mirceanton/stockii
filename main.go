@@ -109,8 +109,10 @@ func main() {
 
 	// API - Settings
 	r.Post("/api/categories", handlers.CreateCategoryHandler)
+	r.Put("/api/categories/{id}", handlers.UpdateCategoryHandler)
 	r.Delete("/api/categories/{id}", handlers.DeleteCategoryHandler)
 	r.Post("/api/fandoms", handlers.CreateFandomHandler)
+	r.Put("/api/fandoms/{id}", handlers.UpdateFandomHandler)
 	r.Delete("/api/fandoms/{id}", handlers.DeleteFandomHandler)
 	r.Post("/api/convention-series", handlers.CreateConventionSeriesHandler)
 	r.Put("/api/convention-series/{id}", handlers.UpdateConventionSeriesHandler)

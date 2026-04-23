@@ -41,6 +41,29 @@ func CreateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form", http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("name")
+	if name == "" {
+		http.Error(w, "Name required", http.StatusBadRequest)
+		return
+	}
+	if err := db.UpdateCategory(uint(id), name); err != nil {
+		http.Error(w, "Failed to update category", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Redirect", "/settings")
+	w.WriteHeader(http.StatusOK)
+}
+
 func DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -69,6 +92,29 @@ func CreateFandomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := db.CreateFandom(name); err != nil {
 		http.Error(w, "Failed to create fandom", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Redirect", "/settings")
+	w.WriteHeader(http.StatusOK)
+}
+
+func UpdateFandomHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form", http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("name")
+	if name == "" {
+		http.Error(w, "Name required", http.StatusBadRequest)
+		return
+	}
+	if err := db.UpdateFandom(uint(id), name); err != nil {
+		http.Error(w, "Failed to update fandom", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("HX-Redirect", "/settings")
