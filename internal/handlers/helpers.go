@@ -164,18 +164,3 @@ func renderStandalone(w http.ResponseWriter, name string, data interface{}) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
-
-func renderFragment(w http.ResponseWriter, name string, data interface{}) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	for _, t := range pageTemplates {
-		if tmpl := t.Lookup(name); tmpl != nil {
-			if err := tmpl.Execute(w, data); err != nil {
-				log.Printf("render fragment %s: %v", name, err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
-			return
-		}
-	}
-	log.Printf("fragment template %s not found", name)
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-}

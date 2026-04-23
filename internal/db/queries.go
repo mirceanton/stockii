@@ -251,7 +251,7 @@ func GetConventionPnL(conventionID uint) (*models.ConventionPnL, error) {
 	for _, v := range views {
 		pnl.TotalRevenue += v.Revenue
 		pnl.TotalSold += v.QtySold
-		pnl.TotalBrought += v.ConventionProduct.QtyBrought
+		pnl.TotalBrought += v.QtyBrought
 		pnl.ProductCount++
 	}
 	pnl.TotalCost = conv.TableCost + conv.PrepCost
