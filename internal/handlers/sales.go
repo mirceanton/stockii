@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +11,56 @@ import (
 	"github.com/mirceanton/stockii/internal/db"
 	"github.com/mirceanton/stockii/internal/models"
 )
+
+func ConventionSalesHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	conv, err := db.GetConvention(uint(id))
+	if err != nil {
+		http.Error(w, "Convention not found", http.StatusNotFound)
+		return
+	}
+
+	sales, err := db.GetSalesForConvention(uint(id))
+	if err != nil {
+		http.Error(w, "Failed to load sales", http.StatusInternalServerError)
+		return
+	}
+
+	render(w, "convention_sales.html", map[string]interface{}{
+		"Page":       "conventions",
+		"Convention": conv,
+		"Sales":      sales,
+	})
+}
+
+func UpdateSaleHandler(w http.ResponseWriter, r *http.Request) {
+	saleID, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	r.ParseForm()
+	quantity, err := strconv.Atoi(r.FormValue("quantity"))
+	if err != nil || quantity <= 0 {
+		http.Error(w, "Invalid quantity", http.StatusBadRequest)
+		return
+	}
+	conventionID := r.FormValue("convention_id")
+
+	if err := db.UpdateSale(uint(saleID), quantity); err != nil {
+		http.Error(w, "Failed to update sale", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("HX-Redirect", fmt.Sprintf("/conventions/%s/sales", conventionID))
+	w.WriteHeader(http.StatusOK)
+}
 
 func SellHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)

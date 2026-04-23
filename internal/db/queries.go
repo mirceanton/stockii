@@ -192,6 +192,21 @@ func DeleteSale(id uint) error {
 	return DB.Delete(&models.Sale{}, id).Error
 }
 
+func UpdateSale(id uint, quantity int) error {
+	return DB.Model(&models.Sale{}).Where("id = ?", id).Update("quantity", quantity).Error
+}
+
+func GetSalesForConvention(conventionID uint) ([]models.Sale, error) {
+	var sales []models.Sale
+	err := DB.
+		Joins("JOIN convention_products ON convention_products.id = sales.convention_product_id").
+		Where("convention_products.convention_id = ?", conventionID).
+		Preload("ConventionProduct.Product.Category").
+		Order("sales.created_at DESC").
+		Find(&sales).Error
+	return sales, err
+}
+
 func GetSalesForConventionProduct(cpID uint) ([]models.Sale, error) {
 	var sales []models.Sale
 	err := DB.Where("convention_product_id = ?", cpID).Order("created_at DESC").Find(&sales).Error

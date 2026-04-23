@@ -110,6 +110,7 @@ func InitTemplates(templatesPath string) error {
 		"dashboard.html",
 		"conventions.html",
 		"convention_detail.html",
+		"convention_sales.html",
 		"convention_form.html",
 		"products.html",
 		"product_detail.html",

@@ -1,0 +1,79 @@
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-receipt me-2"></i>Sales Log</h1>
+        <div class="text-muted-sk">{{.Convention.Name}}</div>
+    </div>
+    <a href="/conventions/{{.Convention.ID}}" class="btn btn-outline-sk"><i class="bi bi-arrow-left me-1"></i>Back to Convention</a>
+</div>
+
+<div class="card">
+    <div class="card-header">Individual Sales</div>
+    {{if .Sales}}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th class="text-end">Quantity</th>
+                    <th></th>
+                </tr>
+            </thead>
+            {{range .Sales}}
+            <tbody id="sale-group-{{.ID}}">
+                <tr id="sale-view-{{.ID}}">
+                    <td class="text-muted-sk">{{.CreatedAt.Format "Jan 2, 2006 15:04"}}</td>
+                    <td>{{.ConventionProduct.Product.Name}}</td>
+                    <td class="text-muted-sk">{{.ConventionProduct.Product.Category.Name}}</td>
+                    <td class="text-end">{{.Quantity}}</td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-secondary btn-sm me-1" type="button" onclick="skShowEdit('sale', {{.ID}})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm"
+                            hx-delete="/api/sales/{{.ID}}"
+                            hx-confirm="Delete this sale entry?"
+                            hx-swap="none"
+                            hx-on::after-request="if(event.detail.successful) window.location.reload()">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr id="sale-edit-{{.ID}}" class="d-none">
+                    <td colspan="5">
+                        <form class="d-flex align-items-center gap-2" hx-put="/api/sales/{{.ID}}" hx-swap="none">
+                            <span class="text-muted-sk small">{{.CreatedAt.Format "Jan 2, 2006 15:04"}}</span>
+                            <span class="me-auto">{{.ConventionProduct.Product.Name}}</span>
+                            <input type="hidden" name="convention_id" value="{{$.Convention.ID}}">
+                            <label class="text-muted-sk small mb-0">Qty:</label>
+                            <input type="number" name="quantity" value="{{.Quantity}}" min="1" class="form-control form-control-sm" style="width:80px" required>
+                            <button type="submit" class="btn btn-sk btn-sm"><i class="bi bi-check-lg"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="skHideEdit('sale', {{.ID}})"><i class="bi bi-x-lg"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+            {{end}}
+        </table>
+    </div>
+    {{else}}
+    <div class="card-body empty-state">
+        <i class="bi bi-receipt"></i>
+        <p>No sales recorded for this convention yet.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function skShowEdit(prefix, id) {
+    document.getElementById(prefix + '-view-' + id).classList.add('d-none');
+    document.getElementById(prefix + '-edit-' + id).classList.remove('d-none');
+}
+function skHideEdit(prefix, id) {
+    document.getElementById(prefix + '-view-' + id).classList.remove('d-none');
+    document.getElementById(prefix + '-edit-' + id).classList.add('d-none');
+}
+</script>
+{{end}}
