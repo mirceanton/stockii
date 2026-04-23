@@ -11,21 +11,30 @@
 
 {{if .Products}}
 <div class="card">
+    <div class="card-body" style="border-bottom:1px solid var(--sk-border);padding:0.625rem 1rem;">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="input-group input-group-sm" style="max-width:280px;">
+                <span class="input-group-text" style="background:var(--sk-bg-tertiary);border-color:var(--sk-border);color:var(--sk-text-muted);"><i class="bi bi-search"></i></span>
+                <input type="text" id="prod-search" class="form-control form-control-sm" placeholder="Search products...">
+            </div>
+            <div id="prod-filters" class="d-flex gap-1 flex-wrap align-items-center"></div>
+        </div>
+    </div>
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" id="prod-table">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Type</th>
-                    <th>Fandom</th>
+                    <th style="width:54px;"></th>
+                    <th class="sk-sortable" data-col="name">Name <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable" data-col="category">Category <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable" data-col="type">Type <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable" data-col="fandom">Fandom <span class="sk-sort-icon">↕</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 {{range .Products}}
-                <tr class="clickable-row{{if .Archived}} opacity-50{{end}}" onclick="window.location='/products/{{.ID}}'">
+                <tr data-name="{{lower .Name}}" data-category="{{lower .Category.Name}}" data-type="{{.Type}}" data-fandom="{{if .Fandom}}{{lower .Fandom.Name}}{{end}}"{{if .Archived}} class="opacity-50"{{end}}>
                     <td>
                         {{if hasImage .ImagePath}}
                         <img src="/images/{{.ImagePath}}" class="product-thumb" alt="">
@@ -34,19 +43,50 @@
                         {{end}}
                     </td>
                     <td>
-                        <strong>{{.Name}}</strong>
+                        <a href="/products/{{.ID}}" class="fw-bold text-decoration-none" style="color:var(--sk-text-primary);">{{.Name}}</a>
                         {{if .Archived}}<span class="badge bg-secondary ms-1">Archived</span>{{end}}
                     </td>
-                    <td>{{.Category.Name}}</td>
-                    <td><span class="badge badge-type-{{.Type}}">{{productTypeLabel .Type}}</span></td>
-                    <td>{{if .Fandom}}{{.Fandom.Name}}{{else}}<span class="text-muted-sk">-</span>{{end}}</td>
-                    <td class="text-end">
-                        <a href="/products/{{.ID}}/edit" class="btn btn-outline-sk btn-sm" onclick="event.stopPropagation()"><i class="bi bi-pencil"></i></a>
+                    <td>
+                        <button type="button" class="btn btn-link p-0 text-decoration-none sk-filter-btn" style="color:inherit;" data-filter="category" data-value="{{lower .Category.Name}}" data-label="{{.Category.Name}}">{{.Category.Name}}</button>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-link p-0 text-decoration-none sk-filter-btn" data-filter="type" data-value="{{.Type}}" data-label="{{productTypeLabel .Type}}"><span class="badge badge-type-{{.Type}}">{{productTypeLabel .Type}}</span></button>
+                    </td>
+                    <td>
+                        {{if .Fandom}}
+                        <button type="button" class="btn btn-link p-0 text-decoration-none sk-filter-btn" style="color:inherit;" data-filter="fandom" data-value="{{lower .Fandom.Name}}" data-label="{{.Fandom.Name}}">{{.Fandom.Name}}</button>
+                        {{else}}
+                        <span class="text-muted-sk">-</span>
+                        {{end}}
+                    </td>
+                    <td class="text-end" style="white-space:nowrap;">
+                        <a href="/products/{{.ID}}/edit" class="btn btn-outline-sk btn-sm me-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                        {{if .Archived}}
+                        <button class="btn btn-outline-sk btn-sm me-1" title="Unarchive"
+                            hx-post="/api/products/{{.ID}}/unarchive"
+                            hx-confirm="Unarchive this product?"
+                            hx-swap="none"><i class="bi bi-arrow-counterclockwise"></i></button>
+                        {{else}}
+                        <button class="btn btn-outline-secondary btn-sm me-1" title="Archive"
+                            hx-post="/api/products/{{.ID}}/archive"
+                            hx-confirm="Archive this product? It will be hidden from sell pages and convention pickers."
+                            hx-swap="none"><i class="bi bi-archive"></i></button>
+                        {{end}}
+                        <button class="btn btn-outline-danger btn-sm" title="Delete"
+                            hx-delete="/api/products/{{.ID}}"
+                            hx-confirm="Permanently delete this product and all its data?"
+                            hx-swap="none"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
                 {{end}}
             </tbody>
         </table>
+    </div>
+    <div style="border-top:1px solid var(--sk-border);padding:0.5rem 1rem;">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="prod-count" class="text-muted-sk small"></span>
+            <div id="prod-pagination" class="d-flex gap-1 flex-wrap"></div>
+        </div>
     </div>
 </div>
 {{else}}
@@ -60,4 +100,138 @@
     <a href="/products/new" class="btn btn-sk">Add Product</a>
 </div>
 {{end}}
+{{end}}
+
+{{define "scripts"}}
+<script>
+(function () {
+    const ITEMS_PER_PAGE = 25;
+    const table = document.getElementById('prod-table');
+    if (!table) return;
+
+    const tbody = table.querySelector('tbody');
+    const searchInput = document.getElementById('prod-search');
+    const filtersEl = document.getElementById('prod-filters');
+    const countEl = document.getElementById('prod-count');
+    const paginationEl = document.getElementById('prod-pagination');
+
+    let activeFilters = {};
+    let sortCol = null;
+    let sortDir = 1;
+    let currentPage = 1;
+
+    function allRows() { return Array.from(tbody.querySelectorAll('tr')); }
+
+    function visibleRows() {
+        const q = (searchInput.value || '').toLowerCase().trim();
+        return allRows().filter(row => {
+            if (q && !(row.dataset.name || '').includes(q)) return false;
+            for (const [k, v] of Object.entries(activeFilters)) {
+                if ((row.dataset[k] || '') !== v) return false;
+            }
+            return true;
+        });
+    }
+
+    function render() {
+        const visible = visibleRows();
+        const total = visible.length;
+        const all = allRows().length;
+        const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        allRows().forEach(r => r.style.display = 'none');
+        visible.slice(start, start + ITEMS_PER_PAGE).forEach(r => r.style.display = '');
+
+        countEl.textContent = total === all ? `${total} products` : `${total} of ${all} products`;
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        paginationEl.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        function btn(label, page, disabled, active) {
+            const b = document.createElement('button');
+            b.className = 'btn btn-sm ' + (active ? 'btn-sk' : 'btn-outline-secondary');
+            b.textContent = label;
+            b.disabled = disabled;
+            if (!disabled) b.onclick = () => { currentPage = page; render(); };
+            return b;
+        }
+
+        paginationEl.appendChild(btn('‹', currentPage - 1, currentPage === 1, false));
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 7 && i !== 1 && i !== totalPages && Math.abs(i - currentPage) > 2) {
+                if (i === currentPage - 3 || i === currentPage + 3) {
+                    const dots = document.createElement('span');
+                    dots.className = 'btn btn-sm disabled';
+                    dots.textContent = '…';
+                    paginationEl.appendChild(dots);
+                }
+                continue;
+            }
+            paginationEl.appendChild(btn(i, i, false, i === currentPage));
+        }
+        paginationEl.appendChild(btn('›', currentPage + 1, currentPage === totalPages, false));
+    }
+
+    function renderFilterBadges() {
+        filtersEl.innerHTML = '';
+        for (const [key, val] of Object.entries(activeFilters)) {
+            const srcBtn = tbody.querySelector(`.sk-filter-btn[data-filter="${key}"][data-value="${val}"]`);
+            const label = srcBtn ? srcBtn.dataset.label : val;
+            const badge = document.createElement('span');
+            badge.className = 'badge d-inline-flex align-items-center gap-1';
+            badge.style.cssText = 'background:var(--sk-accent);color:#fff;font-size:0.75rem;padding:0.3em 0.55em;border-radius:1rem;';
+            badge.innerHTML = `<i class="bi bi-funnel-fill" style="font-size:0.65em;"></i>${label}<button type="button" style="background:none;border:none;color:#fff;line-height:1;padding:0;margin-left:2px;font-size:0.85em;cursor:pointer;" aria-label="Remove">&times;</button>`;
+            badge.querySelector('button').addEventListener('click', () => {
+                delete activeFilters[key];
+                renderFilterBadges();
+                currentPage = 1;
+                render();
+            });
+            filtersEl.appendChild(badge);
+        }
+    }
+
+    // Sortable headers
+    table.querySelectorAll('thead th.sk-sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.dataset.col;
+            sortDir = sortCol === col ? -sortDir : 1;
+            sortCol = col;
+            table.querySelectorAll('thead th.sk-sortable .sk-sort-icon').forEach(ic => ic.textContent = '↕');
+            th.querySelector('.sk-sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+
+            const rows = allRows();
+            rows.sort((a, b) => {
+                const av = (a.dataset[col] || '').toLowerCase();
+                const bv = (b.dataset[col] || '').toLowerCase();
+                return av.localeCompare(bv) * sortDir;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+            currentPage = 1;
+            render();
+        });
+    });
+
+    // Filter buttons
+    tbody.querySelectorAll('.sk-filter-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            activeFilters[btn.dataset.filter] = btn.dataset.value;
+            renderFilterBadges();
+            currentPage = 1;
+            render();
+        });
+    });
+
+    // Search
+    searchInput.addEventListener('input', () => { currentPage = 1; render(); });
+
+    render();
+})();
+</script>
 {{end}}

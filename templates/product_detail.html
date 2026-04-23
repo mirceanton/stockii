@@ -35,22 +35,22 @@
             <div class="card-header">Convention History</div>
             {{if .History}}
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="history-table">
                     <thead>
                         <tr>
-                            <th>Convention</th>
-                            <th>Date</th>
-                            <th class="text-end">Price</th>
-                            <th class="text-end">Brought</th>
-                            <th class="text-end">Sold</th>
-                            <th class="text-end">Sell-Through</th>
-                            <th class="text-end">Revenue</th>
+                            <th class="sk-sortable">Convention <span class="sk-sort-icon">↕</span></th>
+                            <th class="sk-sortable">Date <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Price <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Brought <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sold <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Sell-Through <span class="sk-sort-icon">↕</span></th>
+                            <th class="text-end sk-sortable">Revenue <span class="sk-sort-icon">↕</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         {{range .History}}
                         <tr>
-                            <td>{{.ConventionName}}</td>
+                            <td><a href="/conventions/{{.ConventionID}}" style="color:var(--sk-accent);text-decoration:none;">{{.ConventionName}}</a></td>
                             <td>{{.ConventionDate.Format "Jan 2, 2006"}}</td>
                             <td class="text-end">{{formatMoney .SalePrice}}</td>
                             <td class="text-end">{{.QtyBrought}}</td>
@@ -71,4 +71,8 @@
         </div>
     </div>
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script>skInitSortable('history-table');</script>
 {{end}}

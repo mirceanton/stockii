@@ -93,6 +93,7 @@ type ConventionPnL struct {
 
 type ProductHistory struct {
 	Product         Product   `json:"product"`
+	ConventionID    uint      `json:"convention_id"`
 	ConventionName  string    `json:"convention_name"`
 	ConventionDate  time.Time `json:"convention_date"`
 	QtyBrought      int       `json:"qty_brought"`

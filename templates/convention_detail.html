@@ -86,18 +86,18 @@
     <div class="card-header">Inventory &amp; Sales</div>
     {{if .Products}}
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" id="conv-products-table">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Brought</th>
-                    <th class="text-end">Sold</th>
-                    <th class="text-end">Sell-Through</th>
-                    <th class="text-end">Revenue</th>
-                    <th>Status</th>
+                    <th style="width:54px;"></th>
+                    <th class="sk-sortable">Product <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable">Category <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Price <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Brought <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Sold <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Sell-Through <span class="sk-sort-icon">↕</span></th>
+                    <th class="text-end sk-sortable">Revenue <span class="sk-sort-icon">↕</span></th>
+                    <th class="sk-sortable">Status <span class="sk-sort-icon">↕</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -136,4 +136,8 @@
     </div>
     {{end}}
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script>skInitSortable('conv-products-table');</script>
 {{end}}
