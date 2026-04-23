@@ -18,6 +18,10 @@ func CreateCategory(name string) (*models.Category, error) {
 	return &cat, err
 }
 
+func UpdateCategory(id uint, name string) error {
+	return DB.Model(&models.Category{}).Where("id = ?", id).Update("name", name).Error
+}
+
 func DeleteCategory(id uint) error {
 	return DB.Delete(&models.Category{}, id).Error
 }
@@ -34,6 +38,10 @@ func CreateFandom(name string) (*models.Fandom, error) {
 	f := models.Fandom{Name: name}
 	err := DB.Create(&f).Error
 	return &f, err
+}
+
+func UpdateFandom(id uint, name string) error {
+	return DB.Model(&models.Fandom{}).Where("id = ?", id).Update("name", name).Error
 }
 
 func DeleteFandom(id uint) error {

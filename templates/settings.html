@@ -18,11 +18,19 @@
                 {{if .Categories}}
                 <ul class="list-group list-group-flush">
                     {{range .Categories}}
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
-                        {{.Name}}
-                        <button class="btn btn-outline-danger btn-sm" hx-delete="/api/categories/{{.ID}}" hx-confirm="Delete category '{{.Name}}'?" hx-swap="none">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    <li class="list-group-item" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
+                        <div class="d-flex justify-content-between align-items-center" id="cat-view-{{.ID}}">
+                            <span>{{.Name}}</span>
+                            <div>
+                                <button class="btn btn-outline-secondary btn-sm me-1" type="button" onclick="skShowEdit('cat', {{.ID}})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" hx-delete="/api/categories/{{.ID}}" hx-confirm="Delete category '{{.Name}}'?" hx-swap="none"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                        <form class="d-none input-group" id="cat-edit-{{.ID}}" hx-put="/api/categories/{{.ID}}" hx-swap="none">
+                            <input type="text" name="name" class="form-control form-control-sm" value="{{.Name}}" required>
+                            <button type="submit" class="btn btn-sk btn-sm"><i class="bi bi-check-lg"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="skHideEdit('cat', {{.ID}})"><i class="bi bi-x-lg"></i></button>
+                        </form>
                     </li>
                     {{end}}
                 </ul>
@@ -45,11 +53,19 @@
                 {{if .Fandoms}}
                 <ul class="list-group list-group-flush">
                     {{range .Fandoms}}
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
-                        {{.Name}}
-                        <button class="btn btn-outline-danger btn-sm" hx-delete="/api/fandoms/{{.ID}}" hx-confirm="Delete fandom '{{.Name}}'?" hx-swap="none">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    <li class="list-group-item" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
+                        <div class="d-flex justify-content-between align-items-center" id="fandom-view-{{.ID}}">
+                            <span>{{.Name}}</span>
+                            <div>
+                                <button class="btn btn-outline-secondary btn-sm me-1" type="button" onclick="skShowEdit('fandom', {{.ID}})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" hx-delete="/api/fandoms/{{.ID}}" hx-confirm="Delete fandom '{{.Name}}'?" hx-swap="none"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                        <form class="d-none input-group" id="fandom-edit-{{.ID}}" hx-put="/api/fandoms/{{.ID}}" hx-swap="none">
+                            <input type="text" name="name" class="form-control form-control-sm" value="{{.Name}}" required>
+                            <button type="submit" class="btn btn-sk btn-sm"><i class="bi bi-check-lg"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="skHideEdit('fandom', {{.ID}})"><i class="bi bi-x-lg"></i></button>
+                        </form>
                     </li>
                     {{end}}
                 </ul>
@@ -74,11 +90,24 @@
                 {{if .Series}}
                 <ul class="list-group list-group-flush">
                     {{range .Series}}
-                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
-                        {{.Name}}
-                        <button class="btn btn-outline-danger btn-sm" hx-delete="/api/convention-series/{{.ID}}" hx-confirm="Delete series '{{.Name}}'?" hx-swap="none">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    <li class="list-group-item" style="background:transparent;border-color:var(--sk-border);color:var(--sk-text-primary);">
+                        <div class="d-flex justify-content-between align-items-center" id="series-view-{{.ID}}">
+                            <span>{{.Name}}</span>
+                            <div>
+                                <button class="btn btn-outline-secondary btn-sm me-1" type="button" onclick="skShowEdit('series', {{.ID}})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" hx-delete="/api/convention-series/{{.ID}}" hx-confirm="Delete series '{{.Name}}'?" hx-swap="none"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                        <form class="d-none" id="series-edit-{{.ID}}" hx-put="/api/convention-series/{{.ID}}" hx-swap="none">
+                            <div class="input-group mb-1">
+                                <input type="text" name="name" class="form-control form-control-sm" value="{{.Name}}" required>
+                            </div>
+                            <input type="text" name="notes" class="form-control form-control-sm mb-1" value="{{.Notes}}" placeholder="Notes...">
+                            <div class="d-flex gap-1">
+                                <button type="submit" class="btn btn-sk btn-sm"><i class="bi bi-check-lg"></i></button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="skHideEdit('series', {{.ID}})"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </form>
                     </li>
                     {{end}}
                 </ul>
@@ -89,4 +118,17 @@
         </div>
     </div>
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+function skShowEdit(prefix, id) {
+    document.getElementById(prefix + '-view-' + id).classList.add('d-none');
+    document.getElementById(prefix + '-edit-' + id).classList.remove('d-none');
+}
+function skHideEdit(prefix, id) {
+    document.getElementById(prefix + '-view-' + id).classList.remove('d-none');
+    document.getElementById(prefix + '-edit-' + id).classList.add('d-none');
+}
+</script>
 {{end}}
