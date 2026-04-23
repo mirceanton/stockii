@@ -77,7 +77,8 @@ changelog:
 
 dockers:
   - image_templates:
-      - "ghcr.io/mirceanton/{{.ProjectName}}:v{{.Version}}-amd64"
+      - "ghcr.io/mirceanton/{{.ProjectName}}:v{{.Version}}"
+      - "ghcr.io/mirceanton/{{.ProjectName}}:latest"
     use: buildx
     dockerfile: Dockerfile
     extra_files:
@@ -94,12 +95,3 @@ dockers:
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.authors=Mircea-Pavel Anton <contact@mirceanton.com>"
       - "--label=org.opencontainers.image.description=A self-hosted convention merchandise stock and sales tracker."
-
-docker_manifests:
-  - name_template: "ghcr.io/mirceanton/{{.ProjectName}}:v{{.Version}}"
-    image_templates:
-      - "ghcr.io/mirceanton/{{.ProjectName}}:v{{.Version}}-amd64"
-
-  - name_template: "ghcr.io/mirceanton/{{.ProjectName}}:latest"
-    image_templates:
-      - "ghcr.io/mirceanton/{{.ProjectName}}:v{{.Version}}-amd64"
