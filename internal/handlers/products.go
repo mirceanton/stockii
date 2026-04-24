@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -273,18 +276,44 @@ func handleImageUpload(r *http.Request, fieldName string) (string, error) {
 		return "", fmt.Errorf("create images dir: %w", err)
 	}
 
-	// Decode, auto-correct EXIF orientation, resize to fit within 1500×1500
-	img, err := imaging.Decode(file, imaging.AutoOrientation(true))
+	// Decode, auto-correct EXIF orientation, then resize to fit within 1500×1500
+	src, err := imaging.Decode(file, imaging.AutoOrientation(true))
 	if err != nil {
 		return "", fmt.Errorf("decode image: %w", err)
 	}
-	img = imaging.Fit(img, 1500, 1500, imaging.Lanczos)
+	hasAlpha := imageHasAlpha(src)
+	img := imaging.Fit(src, 1500, 1500, imaging.Lanczos)
 
-	// Always save as JPEG regardless of input format
-	filename := fmt.Sprintf("%d.jpg", time.Now().UnixNano())
-	if err := imaging.Save(img, filepath.Join(imagesDir, filename), imaging.JPEGQuality(82)); err != nil {
-		return "", fmt.Errorf("save image: %w", err)
+	// Choose extension based on transparency: PNG preserves alpha, JPEG does not.
+	ext := ".jpg"
+	if hasAlpha {
+		ext = ".png"
+	}
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	if err := encodeImage(img, filepath.Join(imagesDir, filename), hasAlpha); err != nil {
+		return "", err
 	}
 
 	return filename, nil
+}
+
+// imageHasAlpha reports whether img's color model carries an alpha channel.
+// Must be called on the raw decoded image before imaging.Fit, which always
+// returns *image.NRGBA regardless of input.
+func imageHasAlpha(img image.Image) bool {
+	switch img.ColorModel() {
+	case color.RGBAModel, color.NRGBAModel, color.RGBA64Model, color.NRGBA64Model,
+		color.AlphaModel, color.Alpha16Model:
+		return true
+	}
+	return false
+}
+
+// encodeImage writes img to dst path using PNG (max compression) when hasAlpha
+// is true, or JPEG quality 82 otherwise.
+func encodeImage(img image.Image, dst string, hasAlpha bool) error {
+	if hasAlpha {
+		return imaging.Save(img, dst, imaging.PNGCompressionLevel(png.BestCompression))
+	}
+	return imaging.Save(img, dst, imaging.JPEGQuality(82))
 }

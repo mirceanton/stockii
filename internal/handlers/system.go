@@ -113,21 +113,27 @@ func RecompressImagesHandler(w http.ResponseWriter, r *http.Request) {
 		oldName := entry.Name()
 		oldPath := filepath.Join(imagesDir, oldName)
 
-		img, err := imaging.Open(oldPath, imaging.AutoOrientation(true))
+		// Decode first so we can check for alpha before imaging.Fit normalises the type.
+		src, err := imaging.Open(oldPath, imaging.AutoOrientation(true))
 		if err != nil {
 			errCount++
 			errMsgs = append(errMsgs, fmt.Sprintf("%s: %v", oldName, err))
 			continue
 		}
 
-		img = imaging.Fit(img, 1500, 1500, imaging.Lanczos)
+		hasAlpha := imageHasAlpha(src)
+		img := imaging.Fit(src, 1500, 1500, imaging.Lanczos)
 
 		stem := strings.TrimSuffix(oldName, filepath.Ext(oldName))
-		newName := stem + ".jpg"
+		newExt := ".jpg"
+		if hasAlpha {
+			newExt = ".png"
+		}
+		newName := stem + newExt
 		newPath := filepath.Join(imagesDir, newName)
 		tmpPath := newPath + ".tmp"
 
-		if err := imaging.Save(img, tmpPath, imaging.JPEGQuality(82)); err != nil {
+		if err := encodeImage(img, tmpPath, hasAlpha); err != nil {
 			errCount++
 			errMsgs = append(errMsgs, fmt.Sprintf("%s: save failed: %v", newName, err))
 			os.Remove(tmpPath)
