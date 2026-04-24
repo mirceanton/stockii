@@ -19,6 +19,7 @@ function initSellPage(convId) {
     loadPendingQueue();
     updateStatusBadge();
     updatePendingDisplay();
+    initCategoryStates();
 
     // Event delegation for product cards
     var productList = document.getElementById('product-list');
@@ -42,6 +43,11 @@ function initSellPage(convId) {
         });
     }
 
+    var searchInput = document.getElementById('product-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterProducts);
+    }
+
     // Auto-sync every 10 seconds when online
     setInterval(function() {
         if (navigator.onLine && pendingQueue.length > 0) {
@@ -61,6 +67,105 @@ function initSellPage(convId) {
             console.log('SW registration failed:', err);
         });
     }
+}
+
+// ---- Category collapse ----
+
+function initCategoryStates() {
+    var headers = document.querySelectorAll('.category-header');
+    headers.forEach(function(header) {
+        var name = header.dataset.category;
+        var grid = header.closest('.category-section').querySelector('.product-grid');
+        if (getCategoryState(name)) {
+            header.classList.add('open');
+            grid.style.display = 'grid';
+        }
+    });
+}
+
+function toggleCategory(header) {
+    var grid = header.closest('.category-section').querySelector('.product-grid');
+    var isOpen = header.classList.contains('open');
+    if (isOpen) {
+        header.classList.remove('open');
+        grid.style.display = 'none';
+    } else {
+        header.classList.add('open');
+        grid.style.display = 'grid';
+    }
+    saveCategoryState(header.dataset.category, !isOpen);
+}
+
+function saveCategoryState(name, isOpen) {
+    try {
+        var key = 'stockii-cats-' + conventionId;
+        var stored = JSON.parse(localStorage.getItem(key) || '{}');
+        stored[name] = isOpen;
+        localStorage.setItem(key, JSON.stringify(stored));
+    } catch(e) {}
+}
+
+function getCategoryState(name) {
+    try {
+        var key = 'stockii-cats-' + conventionId;
+        var stored = JSON.parse(localStorage.getItem(key) || '{}');
+        return stored[name] === true;
+    } catch(e) { return false; }
+}
+
+// ---- Search / filter ----
+
+function filterProducts() {
+    var query = document.getElementById('product-search').value.toLowerCase().trim();
+    var clearBtn = document.getElementById('search-clear');
+    var noResults = document.getElementById('no-results');
+    clearBtn.style.display = query ? '' : 'none';
+
+    var sections = document.querySelectorAll('.category-section');
+    var totalVisible = 0;
+
+    sections.forEach(function(section) {
+        var header = section.querySelector('.category-header');
+        var grid = section.querySelector('.product-grid');
+        var cards = section.querySelectorAll('.product-card');
+        var visibleCount = 0;
+
+        if (query) {
+            cards.forEach(function(card) {
+                var name = (card.dataset.productName || '').toLowerCase();
+                var visible = name.includes(query);
+                card.style.display = visible ? '' : 'none';
+                if (visible) visibleCount++;
+            });
+            section.style.display = visibleCount > 0 ? '' : 'none';
+            if (visibleCount > 0) {
+                grid.style.display = 'grid';
+            }
+            totalVisible += visibleCount;
+        } else {
+            section.style.display = '';
+            cards.forEach(function(card) { card.style.display = ''; });
+            var isOpen = getCategoryState(header.dataset.category);
+            if (isOpen) {
+                header.classList.add('open');
+                grid.style.display = 'grid';
+            } else {
+                header.classList.remove('open');
+                grid.style.display = 'none';
+            }
+            totalVisible++;
+        }
+    });
+
+    if (noResults) {
+        noResults.style.display = (query && totalVisible === 0) ? '' : 'none';
+    }
+}
+
+function clearSearch() {
+    var input = document.getElementById('product-search');
+    if (input) input.value = '';
+    filterProducts();
 }
 
 // ---- Double-tap handling ----

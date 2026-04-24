@@ -32,10 +32,12 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        .sell-header {
+        .sticky-top-wrapper {
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+        .sell-header {
             background: var(--sk-bg-secondary);
             border-bottom: 1px solid var(--sk-border);
             padding: 0.75rem 1rem;
@@ -56,6 +58,47 @@
         }
         .status-online { background: var(--sk-success); color: #000; }
         .status-offline { background: var(--sk-warning); color: #000; }
+        .search-wrapper {
+            background: var(--sk-bg-secondary);
+            border-bottom: 1px solid var(--sk-border);
+            padding: 0.5rem 1rem;
+        }
+        .search-input-group {
+            display: flex;
+            align-items: center;
+            background: var(--sk-bg-tertiary);
+            border: 1px solid var(--sk-border);
+            border-radius: 8px;
+            padding: 0.4rem 0.75rem;
+            gap: 0.5rem;
+        }
+        .search-input-group i.bi-search {
+            color: var(--sk-text-muted);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .search-input-group input {
+            background: none;
+            border: none;
+            color: var(--sk-text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            flex: 1;
+            min-width: 0;
+        }
+        .search-input-group input::placeholder { color: var(--sk-text-muted); }
+        .search-clear {
+            background: none;
+            border: none;
+            color: var(--sk-text-muted);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .search-clear:hover { color: var(--sk-text-primary); }
         .category-section {
             margin-bottom: 0.5rem;
         }
@@ -68,9 +111,20 @@
             color: var(--sk-text-muted);
             background: var(--sk-bg-tertiary);
             border-bottom: 1px solid var(--sk-border);
-            position: sticky;
-            top: 52px;
-            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .category-header:hover { background: var(--sk-bg-secondary); }
+        .category-chevron {
+            transition: transform 0.2s ease;
+            font-size: 0.75rem;
+        }
+        .category-header.open .category-chevron {
+            transform: rotate(90deg);
         }
         .product-grid {
             display: grid;
@@ -210,31 +264,46 @@
             from { opacity: 0; transform: translateX(-50%) translateY(10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-        .product-card.tap-primed {
-            border-color: var(--sk-accent);
-            box-shadow: 0 0 0 2px rgba(154, 97, 219, 0.35);
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--sk-text-muted);
         }
     </style>
 </head>
 <body>
-    <div class="sell-header">
-        <div>
-            <a href="/conventions/{{.Convention.ID}}" style="color:var(--sk-text-muted);text-decoration:none;font-size:0.85rem;">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <h1>{{.Convention.Name}}</h1>
+    <div class="sticky-top-wrapper">
+        <div class="sell-header">
+            <div>
+                <a href="/conventions/{{.Convention.ID}}" style="color:var(--sk-text-muted);text-decoration:none;font-size:0.85rem;">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <h1>{{.Convention.Name}}</h1>
+            </div>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+                <span id="status-badge" class="status-badge status-online">Online</span>
+                <span id="sync-badge" class="status-badge" style="background:var(--sk-success);color:#000;">Synced</span>
+            </div>
         </div>
-        <div style="display:flex;gap:0.4rem;align-items:center;">
-            <span id="status-badge" class="status-badge status-online">Online</span>
-            <span id="sync-badge" class="status-badge" style="background:var(--sk-success);color:#000;">Synced</span>
+        <div class="search-wrapper">
+            <div class="search-input-group">
+                <i class="bi bi-search"></i>
+                <input type="text" id="product-search" placeholder="Search products..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button id="search-clear" class="search-clear" style="display:none;" onclick="clearSearch()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         </div>
     </div>
 
     <div id="product-list" style="padding-bottom:1rem;">
         {{range .Groups}}
         <div class="category-section">
-            <div class="category-header">{{.Name}}</div>
-            <div class="product-grid">
+            <div class="category-header" data-category="{{.Name}}" onclick="toggleCategory(this)">
+                <span>{{.Name}}</span>
+                <i class="bi bi-chevron-right category-chevron"></i>
+            </div>
+            <div class="product-grid" style="display:none;">
                 {{range .Products}}
                 {{template "product_card" .}}
                 {{end}}
@@ -249,6 +318,11 @@
             <a href="/conventions/{{.Convention.ID}}" class="btn btn-sm" style="background:var(--sk-accent);color:#fff;">Go Back</a>
         </div>
         {{end}}
+
+        <div id="no-results" class="no-results" style="display:none;">
+            <i class="bi bi-search" style="font-size:2rem;display:block;margin-bottom:0.75rem;"></i>
+            <p>No products match your search.</p>
+        </div>
     </div>
 
     <!-- Quantity Modal (hidden) -->
