@@ -268,6 +268,39 @@ func UpdateConventionProductHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func RestockConventionProductHandler(w http.ResponseWriter, r *http.Request) {
+	cpID, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	cp, err := db.GetConventionProduct(uint(cpID))
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form", http.StatusBadRequest)
+		return
+	}
+
+	qtyAdd, _ := strconv.Atoi(r.FormValue("qty_add"))
+	if qtyAdd <= 0 {
+		http.Error(w, "Quantity must be positive", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.RestockConventionProduct(uint(cpID), qtyAdd); err != nil {
+		http.Error(w, "Failed to restock", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("HX-Redirect", fmt.Sprintf("/conventions/%d", cp.ConventionID))
+	w.WriteHeader(http.StatusOK)
+}
+
 func RemoveProductFromConventionHandler(w http.ResponseWriter, r *http.Request) {
 	cpID, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {

@@ -91,6 +91,7 @@ func main() {
 	// API - Convention Products
 	r.Post("/api/conventions/{id}/products", handlers.AddProductToConventionHandler)
 	r.Put("/api/convention-products/{id}", handlers.UpdateConventionProductHandler)
+	r.Post("/api/convention-products/{id}/restock", handlers.RestockConventionProductHandler)
 	r.Delete("/api/convention-products/{id}", handlers.RemoveProductFromConventionHandler)
 
 	// API - Sales
