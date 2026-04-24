@@ -103,6 +103,16 @@ func GetDataPath() string {
 	return dataPath
 }
 
+var configPath string
+
+func SetConfigPath(path string) {
+	configPath = path
+}
+
+func GetConfigPath() string {
+	return configPath
+}
+
 func InitTemplates(templatesPath string) error {
 	pageTemplates = make(map[string]*template.Template)
 
@@ -118,6 +128,7 @@ func InitTemplates(templatesPath string) error {
 		"sell.html",
 		"reports.html",
 		"settings.html",
+		"status.html",
 	}
 
 	for _, page := range pages {

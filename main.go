@@ -41,6 +41,7 @@ func main() {
 	}
 
 	handlers.SetDataPath(dataPath)
+	handlers.SetConfigPath(dbPath)
 
 	// Initialize database
 	if err := db.Init(dbPath); err != nil {
@@ -82,6 +83,7 @@ func main() {
 	r.Get("/products/{id}/edit", handlers.ProductFormHandler)
 	r.Get("/reports", handlers.ReportsHandler)
 	r.Get("/settings", handlers.SettingsHandler)
+	r.Get("/status", handlers.StatusHandler)
 
 	// API - Conventions
 	r.Post("/api/conventions", handlers.CreateConventionHandler)
@@ -108,6 +110,10 @@ func main() {
 
 	// MCP SSE endpoint (read-only analytics)
 	stockiimcp.MountRoutes(r)
+
+	// API - System
+	r.Get("/api/system/storage", handlers.StorageStatsHandler)
+	r.Post("/api/system/recompress-images", handlers.RecompressImagesHandler)
 
 	// API - Settings
 	r.Post("/api/categories", handlers.CreateCategoryHandler)

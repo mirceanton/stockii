@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/go-chi/chi/v5"
 	"github.com/mirceanton/stockii/internal/db"
 	"github.com/mirceanton/stockii/internal/models"
@@ -273,22 +273,17 @@ func handleImageUpload(r *http.Request, fieldName string) (string, error) {
 		return "", fmt.Errorf("create images dir: %w", err)
 	}
 
-	// Generate unique filename
-	ext := filepath.Ext(header.Filename)
-	if ext == "" {
-		ext = ".jpg"
-	}
-	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-
-	// Save file
-	dst, err := os.Create(filepath.Join(imagesDir, filename))
+	// Decode, auto-correct EXIF orientation, resize to fit within 1500×1500
+	img, err := imaging.Decode(file, imaging.AutoOrientation(true))
 	if err != nil {
-		return "", fmt.Errorf("create file: %w", err)
+		return "", fmt.Errorf("decode image: %w", err)
 	}
-	defer dst.Close()
+	img = imaging.Fit(img, 1500, 1500, imaging.Lanczos)
 
-	if _, err := io.Copy(dst, file); err != nil {
-		return "", fmt.Errorf("save file: %w", err)
+	// Always save as JPEG regardless of input format
+	filename := fmt.Sprintf("%d.jpg", time.Now().UnixNano())
+	if err := imaging.Save(img, filepath.Join(imagesDir, filename), imaging.JPEGQuality(82)); err != nil {
+		return "", fmt.Errorf("save image: %w", err)
 	}
 
 	return filename, nil

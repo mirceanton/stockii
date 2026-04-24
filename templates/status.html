@@ -1,0 +1,78 @@
+{{define "content"}}
+<div class="page-header">
+    <h1><i class="bi bi-hdd me-2"></i>Status</h1>
+    <a href="/status" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Images -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-images me-1"></i>Product Images</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted-sk small">{{.Stats.ImagesCount}} file(s)</span>
+                    <span class="text-muted-sk small">{{.Stats.ImagesBytesHuman}}</span>
+                </div>
+                <div class="progress" style="height:6px;">
+                    <div class="progress-bar" style="width:{{printf "%.1f" .Stats.AssetsUsedPct}}%;background:var(--sk-accent);"></div>
+                </div>
+                <p class="text-muted-sk small mt-2 mb-0">{{printf "%.2f" .Stats.AssetsUsedPct}}% of volume</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-database me-1"></i>Database</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted-sk small">SQLite</span>
+                    <span class="text-muted-sk small">{{.Stats.DBBytesHuman}}</span>
+                </div>
+                <div class="progress" style="height:6px;">
+                    <div class="progress-bar bg-info" style="width:{{printf "%.1f" .Stats.DBUsedPct}}%;"></div>
+                </div>
+                <p class="text-muted-sk small mt-2 mb-0">{{printf "%.2f" .Stats.DBUsedPct}}% of volume</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volume -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-device-hdd me-1"></i>Volume</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted-sk small">{{.Stats.VolumeFreeHuman}} free</span>
+                    <span class="text-muted-sk small">{{.Stats.VolumeTotalHuman}} total</span>
+                </div>
+                <div class="progress" style="height:6px;">
+                    <div class="progress-bar {{.Stats.VolumeBarClass}}" style="width:{{printf "%.1f" .Stats.VolumeUsedPct}}%;"></div>
+                </div>
+                <p class="text-muted-sk small mt-2 mb-0">{{printf "%.1f" .Stats.VolumeUsedPct}}% used</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recompress -->
+<div class="card">
+    <div class="card-header"><i class="bi bi-arrow-repeat me-1"></i>Recompress Existing Images</div>
+    <div class="card-body">
+        <p class="text-muted-sk mb-3">Re-encode all product images on disk as JPEG at 82% quality, resized to fit within 1500&times;1500px. This reduces file sizes without affecting display quality. Existing images may have been uploaded without compression.</p>
+        <div id="recompress-result">
+            <button class="btn btn-warning"
+                    hx-post="/api/system/recompress-images"
+                    hx-target="#recompress-result"
+                    hx-swap="innerHTML"
+                    hx-indicator="#recompress-spinner"
+                    hx-confirm="This will reprocess all {{.Stats.ImagesCount}} image(s) on disk. Continue?">
+                <span id="recompress-spinner" class="htmx-indicator spinner-border spinner-border-sm me-1" role="status"></span>
+                <i class="bi bi-arrow-repeat me-1"></i>Recompress All Images
+            </button>
+        </div>
+    </div>
+</div>
+{{end}}
