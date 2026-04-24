@@ -103,7 +103,6 @@ func RecompressImagesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	processed, errCount := 0, 0
-	var errMsgs []string
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -117,7 +116,6 @@ func RecompressImagesHandler(w http.ResponseWriter, r *http.Request) {
 		src, err := imaging.Open(oldPath, imaging.AutoOrientation(true))
 		if err != nil {
 			errCount++
-			errMsgs = append(errMsgs, fmt.Sprintf("%s: %v", oldName, err))
 			continue
 		}
 
@@ -135,14 +133,12 @@ func RecompressImagesHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err := encodeImage(img, tmpPath, hasAlpha); err != nil {
 			errCount++
-			errMsgs = append(errMsgs, fmt.Sprintf("%s: save failed: %v", newName, err))
 			os.Remove(tmpPath)
 			continue
 		}
 
 		if err := os.Rename(tmpPath, newPath); err != nil {
 			errCount++
-			errMsgs = append(errMsgs, fmt.Sprintf("%s: rename failed: %v", newName, err))
 			os.Remove(tmpPath)
 			continue
 		}
