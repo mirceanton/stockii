@@ -120,9 +120,21 @@
                     <td class="text-end">{{formatMoney .Revenue}}</td>
                     <td><span class="badge {{stockBgClass .StockLevel}}">{{.StockLevel}}</span></td>
                     <td class="text-end">
+                        <button class="btn btn-outline-sk btn-sm me-1" type="button" data-bs-toggle="collapse" data-bs-target="#restock-{{.ID}}" title="Restock">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
                         <button class="btn btn-outline-danger btn-sm" hx-delete="/api/convention-products/{{.ID}}" hx-confirm="Remove this product?" hx-swap="none">
                             <i class="bi bi-x-lg"></i>
                         </button>
+                    </td>
+                </tr>
+                <tr class="collapse" id="restock-{{.ID}}">
+                    <td colspan="10" class="py-2 px-3" style="background:var(--sk-bg-secondary)">
+                        <form class="d-flex align-items-center gap-2" hx-post="/api/convention-products/{{.ID}}/restock" hx-swap="none">
+                            <label class="mb-0 text-muted-sk small">Add stock for <strong>{{.Product.Name}}</strong>:</label>
+                            <input type="number" name="qty_add" class="form-control form-control-sm" style="width:90px" min="1" value="1" required>
+                            <button type="submit" class="btn btn-sk btn-sm">Restock</button>
+                        </form>
                     </td>
                 </tr>
                 {{end}}

@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/mirceanton/stockii/internal/models"
+	"gorm.io/gorm"
 )
 
 // --- Categories ---
@@ -168,6 +169,12 @@ func AddProductToConvention(cp *models.ConventionProduct) error {
 
 func UpdateConventionProduct(cp *models.ConventionProduct) error {
 	return DB.Save(cp).Error
+}
+
+func RestockConventionProduct(id uint, qtyAdd int) error {
+	return DB.Model(&models.ConventionProduct{}).
+		Where("id = ?", id).
+		Update("qty_brought", gorm.Expr("qty_brought + ?", qtyAdd)).Error
 }
 
 func RemoveProductFromConvention(id uint) error {
