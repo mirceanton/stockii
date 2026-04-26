@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/mirceanton/stockii/internal/models"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -14,22 +15,30 @@ import (
 
 var DB *gorm.DB
 
-func Init(dbPath string) error {
-	// Ensure directory exists
-	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("create db directory: %w", err)
+func Init(driver, dsn string) error {
+	var dialector gorm.Dialector
+
+	switch driver {
+	case "sqlite":
+		dir := filepath.Dir(dsn)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("create db directory: %w", err)
+		}
+		dialector = sqlite.Open(dsn + "?_journal_mode=WAL&_foreign_keys=ON&_busy_timeout=5000")
+	case "postgres":
+		dialector = postgres.Open(dsn)
+	default:
+		return fmt.Errorf("unsupported database driver %q: must be \"sqlite\" or \"postgres\"", driver)
 	}
 
 	var err error
-	DB, err = gorm.Open(sqlite.Open(dbPath+"?_journal_mode=WAL&_foreign_keys=ON&_busy_timeout=5000"), &gorm.Config{
+	DB, err = gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
 
-	// Auto-migrate all models
 	if err := DB.AutoMigrate(
 		&models.Category{},
 		&models.Fandom{},
@@ -42,10 +51,9 @@ func Init(dbPath string) error {
 		return fmt.Errorf("auto-migrate: %w", err)
 	}
 
-	// Seed default categories
 	seedCategories()
 
-	log.Printf("Database initialized at %s", dbPath)
+	log.Printf("Database initialized (driver: %s)", driver)
 	return nil
 }
 
