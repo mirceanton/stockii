@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/mirceanton/stockii/internal/models"
 	"gorm.io/gorm"
 )
@@ -368,7 +370,7 @@ func GetProductsNotInConvention(conventionID uint) ([]models.Product, error) {
 // GetUpcomingConventions returns conventions with date_start in the future
 func GetUpcomingConventions() ([]models.Convention, error) {
 	var conventions []models.Convention
-	err := DB.Preload("ConventionSeries").Where("date_start >= date('now')").
+	err := DB.Preload("ConventionSeries").Where("date_start >= ?", time.Now()).
 		Order("date_start ASC").Limit(5).Find(&conventions).Error
 	return conventions, err
 }
@@ -376,7 +378,7 @@ func GetUpcomingConventions() ([]models.Convention, error) {
 // GetRecentConventions returns past conventions ordered by most recent
 func GetRecentConventions() ([]models.Convention, error) {
 	var conventions []models.Convention
-	err := DB.Preload("ConventionSeries").Where("date_start < date('now')").
+	err := DB.Preload("ConventionSeries").Where("date_start < ?", time.Now()).
 		Order("date_start DESC").Limit(5).Find(&conventions).Error
 	return conventions, err
 }

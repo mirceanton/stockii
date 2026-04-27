@@ -20,9 +20,48 @@ func main() {
 		port = "8080"
 	}
 
-	dbPath := os.Getenv("STOCKII_CONFIG_PATH")
-	if dbPath == "" {
-		dbPath = "/config/stockii.db"
+	driver := os.Getenv("STOCKII_DB_DRIVER")
+	if driver == "" {
+		driver = "sqlite"
+	}
+
+	var dsn string
+	switch driver {
+	case "sqlite":
+		dsn = os.Getenv("STOCKII_DB_URI")
+		if dsn == "" {
+			dsn = os.Getenv("STOCKII_CONFIG_PATH")
+		}
+		if dsn == "" {
+			dsn = "/config/stockii.db"
+		}
+	case "postgres":
+		dsn = os.Getenv("STOCKII_DB_URI")
+		if dsn == "" {
+			host := os.Getenv("STOCKII_DB_HOST")
+			if host == "" {
+				host = "localhost"
+			}
+			port := os.Getenv("STOCKII_DB_PORT")
+			if port == "" {
+				port = "5432"
+			}
+			user := os.Getenv("STOCKII_DB_USER")
+			if user == "" {
+				user = "postgres"
+			}
+			password := os.Getenv("STOCKII_DB_PASSWORD")
+			dbName := os.Getenv("STOCKII_DB_NAME")
+			if dbName == "" {
+				dbName = "stockii"
+			}
+			sslMode := os.Getenv("STOCKII_DB_SSLMODE")
+			if sslMode == "" {
+				sslMode = "disable"
+			}
+			dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+				host, port, user, password, dbName, sslMode)
+		}
 	}
 
 	dataPath := os.Getenv("STOCKII_DATA_PATH")
@@ -43,7 +82,7 @@ func main() {
 	handlers.SetDataPath(dataPath)
 
 	// Initialize database
-	if err := db.Init(dbPath); err != nil {
+	if err := db.Init(driver, dsn); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
