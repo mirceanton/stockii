@@ -118,6 +118,41 @@
         </div>
     </div>
 </div>
+
+<!-- Data Management -->
+<div class="row g-4 mt-1">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-database me-2"></i>Data Management</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 style="color:var(--sk-text-primary);">Export</h6>
+                        <p class="small text-muted-sk mb-3">Download all data as a JSON file. Use this to back up your data or to migrate from SQLite to PostgreSQL.</p>
+                        <a href="/api/export" class="btn btn-sk"><i class="bi bi-download me-1"></i>Export Data</a>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 style="color:var(--sk-text-primary);">Import</h6>
+                        <div class="alert py-2 px-3 mb-3 small" role="alert"
+                             style="background:rgba(210,153,34,0.15);border:1px solid #d29522;color:#d29522;">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <strong>Warning:</strong> Importing will permanently delete all existing data before loading the file. This cannot be undone.
+                        </div>
+                        <form hx-post="/api/import"
+                              hx-encoding="multipart/form-data"
+                              hx-swap="none"
+                              hx-confirm="Are you sure? All existing data will be permanently overwritten.">
+                            <div class="input-group">
+                                <input type="file" name="file" class="form-control" accept=".json" required>
+                                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-upload me-1"></i>Import</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {{end}}
 
 {{define "scripts"}}

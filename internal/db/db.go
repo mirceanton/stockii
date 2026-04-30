@@ -13,9 +13,14 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
+var (
+	DB     *gorm.DB
+	Driver string
+)
 
 func Init(driver, dsn string) error {
+	Driver = driver
+
 	var dialector gorm.Dialector
 
 	switch driver {

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/mirceanton/stockii/internal/models"
@@ -517,4 +518,182 @@ func GetFandomSalesReport() ([]map[string]interface{}, error) {
 	}
 
 	return report, nil
+}
+
+// --- Data Export / Import ---
+
+func ExportAllData() (*models.ExportData, error) {
+	data := &models.ExportData{ExportedAt: time.Now()}
+
+	var cats []models.Category
+	if err := DB.Find(&cats).Error; err != nil {
+		return nil, fmt.Errorf("export categories: %w", err)
+	}
+	for _, c := range cats {
+		data.Categories = append(data.Categories, models.ExportCategory(c))
+	}
+
+	var fandoms []models.Fandom
+	if err := DB.Find(&fandoms).Error; err != nil {
+		return nil, fmt.Errorf("export fandoms: %w", err)
+	}
+	for _, f := range fandoms {
+		data.Fandoms = append(data.Fandoms, models.ExportFandom(f))
+	}
+
+	var series []models.ConventionSeries
+	if err := DB.Find(&series).Error; err != nil {
+		return nil, fmt.Errorf("export convention_series: %w", err)
+	}
+	for _, s := range series {
+		data.ConventionSeries = append(data.ConventionSeries, models.ExportConventionSeries{
+			ID: s.ID, Name: s.Name, Notes: s.Notes, CreatedAt: s.CreatedAt,
+		})
+	}
+
+	var products []models.Product
+	if err := DB.Find(&products).Error; err != nil {
+		return nil, fmt.Errorf("export products: %w", err)
+	}
+	for _, p := range products {
+		data.Products = append(data.Products, models.ExportProduct{
+			ID: p.ID, Name: p.Name, CategoryID: p.CategoryID,
+			Type: p.Type, FandomID: p.FandomID, ImagePath: p.ImagePath,
+			Archived: p.Archived, CreatedAt: p.CreatedAt,
+		})
+	}
+
+	var convs []models.Convention
+	if err := DB.Find(&convs).Error; err != nil {
+		return nil, fmt.Errorf("export conventions: %w", err)
+	}
+	for _, c := range convs {
+		data.Conventions = append(data.Conventions, models.ExportConvention{
+			ID: c.ID, ConventionSeriesID: c.ConventionSeriesID,
+			Name: c.Name, Location: c.Location,
+			DateStart: c.DateStart, DateEnd: c.DateEnd,
+			Type: c.Type, TableCost: c.TableCost, PrepCost: c.PrepCost,
+			Notes: c.Notes, CreatedAt: c.CreatedAt,
+		})
+	}
+
+	var cps []models.ConventionProduct
+	if err := DB.Find(&cps).Error; err != nil {
+		return nil, fmt.Errorf("export convention_products: %w", err)
+	}
+	for _, cp := range cps {
+		data.ConventionProducts = append(data.ConventionProducts, models.ExportConventionProduct{
+			ID: cp.ID, ConventionID: cp.ConventionID, ProductID: cp.ProductID,
+			QtyBrought: cp.QtyBrought, SalePrice: cp.SalePrice,
+		})
+	}
+
+	var sales []models.Sale
+	if err := DB.Find(&sales).Error; err != nil {
+		return nil, fmt.Errorf("export sales: %w", err)
+	}
+	for _, s := range sales {
+		data.Sales = append(data.Sales, models.ExportSale{
+			ID: s.ID, ConventionProductID: s.ConventionProductID,
+			Quantity: s.Quantity, CreatedAt: s.CreatedAt,
+		})
+	}
+
+	return data, nil
+}
+
+func ImportAllData(data *models.ExportData) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Delete in reverse dependency order using raw SQL to bypass any GORM hooks.
+		for _, table := range []string{
+			"sales", "convention_products", "conventions",
+			"products", "convention_series", "fandoms", "categories",
+		} {
+			if err := tx.Exec("DELETE FROM " + table).Error; err != nil {
+				return fmt.Errorf("delete %s: %w", table, err)
+			}
+		}
+
+		for _, c := range data.Categories {
+			row := models.Category(c)
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert category %d: %w", c.ID, err)
+			}
+		}
+		for _, f := range data.Fandoms {
+			row := models.Fandom(f)
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert fandom %d: %w", f.ID, err)
+			}
+		}
+		for _, s := range data.ConventionSeries {
+			row := models.ConventionSeries{ID: s.ID, Name: s.Name, Notes: s.Notes, CreatedAt: s.CreatedAt}
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert convention_series %d: %w", s.ID, err)
+			}
+		}
+		for _, p := range data.Products {
+			row := models.Product{
+				ID: p.ID, Name: p.Name, CategoryID: p.CategoryID,
+				Type: p.Type, FandomID: p.FandomID, ImagePath: p.ImagePath,
+				Archived: p.Archived, CreatedAt: p.CreatedAt,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert product %d: %w", p.ID, err)
+			}
+		}
+		for _, c := range data.Conventions {
+			row := models.Convention{
+				ID: c.ID, ConventionSeriesID: c.ConventionSeriesID,
+				Name: c.Name, Location: c.Location,
+				DateStart: c.DateStart, DateEnd: c.DateEnd,
+				Type: c.Type, TableCost: c.TableCost, PrepCost: c.PrepCost,
+				Notes: c.Notes, CreatedAt: c.CreatedAt,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert convention %d: %w", c.ID, err)
+			}
+		}
+		for _, cp := range data.ConventionProducts {
+			row := models.ConventionProduct{
+				ID: cp.ID, ConventionID: cp.ConventionID, ProductID: cp.ProductID,
+				QtyBrought: cp.QtyBrought, SalePrice: cp.SalePrice,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert convention_product %d: %w", cp.ID, err)
+			}
+		}
+		for _, s := range data.Sales {
+			row := models.Sale{
+				ID: s.ID, ConventionProductID: s.ConventionProductID,
+				Quantity: s.Quantity, CreatedAt: s.CreatedAt,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return fmt.Errorf("insert sale %d: %w", s.ID, err)
+			}
+		}
+
+		// Reset PostgreSQL sequences so future auto-increment IDs don't collide.
+		if Driver == "postgres" {
+			for _, t := range []struct{ table, col string }{
+				{"categories", "id"},
+				{"fandoms", "id"},
+				{"convention_series", "id"},
+				{"products", "id"},
+				{"conventions", "id"},
+				{"convention_products", "id"},
+				{"sales", "id"},
+			} {
+				sql := fmt.Sprintf(
+					`SELECT setval(pg_get_serial_sequence('%s', '%s'), COALESCE(MAX(%s), 1)) FROM %s`,
+					t.table, t.col, t.col, t.table,
+				)
+				if err := tx.Exec(sql).Error; err != nil {
+					return fmt.Errorf("reset sequence for %s: %w", t.table, err)
+				}
+			}
+		}
+
+		return nil
+	})
 }
