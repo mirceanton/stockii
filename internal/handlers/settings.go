@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mirceanton/stockii/internal/db"
+	"github.com/mirceanton/stockii/internal/models"
 )
 
 func SettingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -183,6 +187,51 @@ func DeleteConventionSeriesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to delete series", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("HX-Redirect", "/settings")
+	w.WriteHeader(http.StatusOK)
+}
+
+// Data Export / Import
+
+func ExportDataHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := db.ExportAllData()
+	if err != nil {
+		http.Error(w, "Failed to export data", http.StatusInternalServerError)
+		return
+	}
+
+	filename := "stockii-export-" + time.Now().Format("2006-01-02") + ".json"
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("ExportDataHandler: encode error: %v", err)
+	}
+}
+
+func ImportDataHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Missing file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	var data models.ExportData
+	if err := json.NewDecoder(file).Decode(&data); err != nil {
+		http.Error(w, "Invalid JSON file", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.ImportAllData(&data); err != nil {
+		http.Error(w, "Import failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("HX-Redirect", "/settings")
 	w.WriteHeader(http.StatusOK)
 }

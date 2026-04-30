@@ -149,6 +149,10 @@ func main() {
 	// MCP SSE endpoint (read-only analytics)
 	stockiimcp.MountRoutes(r)
 
+	// API - Data Management
+	r.Get("/api/export", handlers.ExportDataHandler)
+	r.Post("/api/import", handlers.ImportDataHandler)
+
 	// API - Settings
 	r.Post("/api/categories", handlers.CreateCategoryHandler)
 	r.Put("/api/categories/{id}", handlers.UpdateCategoryHandler)
