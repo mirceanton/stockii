@@ -1,4 +1,45 @@
 {{define "content"}}
+<style>
+#sk-edit-cp-dialog {
+    background: var(--sk-bg-secondary);
+    border: 1px solid var(--sk-border);
+    border-radius: 8px;
+    color: var(--sk-text-primary);
+    padding: 1.5rem;
+    max-width: 380px;
+    width: calc(100% - 2rem);
+}
+#sk-edit-cp-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+#sk-edit-cp-cancel {
+    background: transparent;
+    border: 1px solid var(--sk-border);
+    color: var(--sk-text-primary);
+    padding: 0.35rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+#sk-edit-cp-cancel:hover {
+    border-color: var(--sk-text-muted);
+    background: var(--sk-bg-tertiary);
+}
+#sk-edit-cp-save {
+    background: var(--sk-accent);
+    border: 1px solid var(--sk-accent);
+    color: #fff;
+    padding: 0.35rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+#sk-edit-cp-save:hover {
+    background: var(--sk-accent-hover);
+    border-color: var(--sk-accent-hover);
+}
+</style>
 <div class="page-header">
     <h1><i class="bi bi-calendar-event me-2"></i>{{.Convention.Name}}</h1>
     <div class="d-flex gap-2">
@@ -120,7 +161,13 @@
                     <td class="text-end">{{formatMoney .Revenue}}</td>
                     <td><span class="badge {{stockBgClass .StockLevel}}">{{.StockLevel}}</span></td>
                     <td class="text-end">
-                        <button class="btn btn-outline-sk btn-sm me-1" type="button" data-bs-toggle="collapse" data-bs-target="#edit-{{.ID}}" title="Edit">
+                        <button class="btn btn-outline-sk btn-sm me-1"
+                                type="button"
+                                title="Edit"
+                                data-edit-cp-id="{{.ID}}"
+                                data-edit-cp-name="{{.Product.Name}}"
+                                data-edit-cp-qty="{{.QtyBrought}}"
+                                data-edit-cp-price="{{.SalePrice}}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         <button class="btn btn-outline-danger btn-sm" hx-delete="/api/convention-products/{{.ID}}" hx-confirm="Remove this product?" hx-swap="none">
@@ -128,19 +175,7 @@
                         </button>
                     </td>
                 </tr>
-                <tr class="collapse" id="edit-{{.ID}}">
-                    <td colspan="10" class="py-2 px-3" style="background:var(--sk-bg-secondary)">
-                        <form class="d-flex align-items-center gap-2" hx-put="/api/convention-products/{{.ID}}" hx-swap="none">
-                            <label class="mb-0 text-muted-sk small">Edit <strong>{{.Product.Name}}</strong>:</label>
-                            <label class="mb-0 text-muted-sk small">Qty Brought</label>
-                            <input type="number" name="qty_brought" class="form-control form-control-sm" style="width:90px" min="0" value="{{.QtyBrought}}" required>
-                            <label class="mb-0 text-muted-sk small">Sale Price</label>
-                            <input type="number" name="sale_price" class="form-control form-control-sm" style="width:100px" step="0.01" min="0" value="{{.SalePrice}}" required>
-                            <button type="submit" class="btn btn-sk btn-sm">Save</button>
-                        </form>
-                    </td>
-                </tr>
-                {{end}}
+{{end}}
             </tbody>
         </table>
     </div>
@@ -151,8 +186,92 @@
     </div>
     {{end}}
 </div>
+
+<dialog id="sk-edit-cp-dialog" aria-labelledby="sk-edit-cp-title">
+    <h6 id="sk-edit-cp-title" style="margin:0 0 1.25rem;font-size:1rem;font-weight:600;">
+        Edit <span id="sk-edit-cp-name"></span>
+    </h6>
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <label class="form-label small text-muted-sk mb-1">Qty Brought</label>
+            <input type="number" id="sk-edit-cp-qty" class="form-control form-control-sm" min="0" required>
+        </div>
+        <div class="col-6">
+            <label class="form-label small text-muted-sk mb-1">Sale Price</label>
+            <input type="number" id="sk-edit-cp-price" class="form-control form-control-sm" step="0.01" min="0" required>
+        </div>
+    </div>
+    <div class="sk-confirm-actions">
+        <button id="sk-edit-cp-cancel" type="button">Cancel</button>
+        <button id="sk-edit-cp-save" type="button">Save</button>
+    </div>
+</dialog>
 {{end}}
 
 {{define "scripts"}}
-<script>skInitSortable('conv-products-table');</script>
+<script>
+skInitSortable('conv-products-table');
+
+(function () {
+    var dialog    = document.getElementById('sk-edit-cp-dialog');
+    var nameEl    = document.getElementById('sk-edit-cp-name');
+    var qtyEl     = document.getElementById('sk-edit-cp-qty');
+    var priceEl   = document.getElementById('sk-edit-cp-price');
+    var saveBtn   = document.getElementById('sk-edit-cp-save');
+    var cancelBtn = document.getElementById('sk-edit-cp-cancel');
+
+    if (!dialog) return;
+
+    var currentCpId = null;
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-edit-cp-id]');
+        if (!btn) return;
+        currentCpId        = btn.dataset.editCpId;
+        nameEl.textContent = btn.dataset.editCpName;
+        qtyEl.value        = btn.dataset.editCpQty;
+        priceEl.value      = btn.dataset.editCpPrice;
+        dialog.showModal();
+        qtyEl.focus();
+    });
+
+    cancelBtn.addEventListener('click', function () { dialog.close(); });
+
+    dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+    });
+
+    saveBtn.addEventListener('click', function () {
+        if (!qtyEl.value.trim() || !priceEl.value.trim()) return;
+
+        var body = new URLSearchParams();
+        body.append('qty_brought', qtyEl.value);
+        body.append('sale_price', priceEl.value);
+
+        saveBtn.disabled    = true;
+        saveBtn.textContent = 'Saving…';
+
+        fetch('/api/convention-products/' + currentCpId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+        .then(function (res) {
+            if (res.ok) {
+                dialog.close();
+                window.location.reload();
+            } else {
+                saveBtn.disabled    = false;
+                saveBtn.textContent = 'Save';
+                showToast('Failed to save changes. Please try again.', 'danger');
+            }
+        })
+        .catch(function () {
+            saveBtn.disabled    = false;
+            saveBtn.textContent = 'Save';
+            showToast('Network error. Please try again.', 'danger');
+        });
+    });
+})();
+</script>
 {{end}}
