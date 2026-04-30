@@ -211,6 +211,55 @@
             .sidebar-nav a span { display: none; }
             .main-content { margin-left: 60px; padding: 1rem; }
         }
+        #sk-confirm-dialog {
+            background: var(--sk-bg-secondary);
+            border: 1px solid var(--sk-border);
+            border-radius: 8px;
+            color: var(--sk-text-primary);
+            padding: 1.5rem;
+            max-width: 420px;
+            width: calc(100% - 2rem);
+        }
+        #sk-confirm-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        #sk-confirm-message {
+            margin: 0 0 1.25rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .sk-confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        #sk-confirm-cancel {
+            background: transparent;
+            border: 1px solid var(--sk-border);
+            color: var(--sk-text-primary);
+            padding: 0.35rem 0.85rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        #sk-confirm-cancel:hover {
+            border-color: var(--sk-text-muted);
+            background: var(--sk-bg-tertiary);
+        }
+        #sk-confirm-ok {
+            background: var(--sk-danger);
+            border: 1px solid var(--sk-danger);
+            color: #fff;
+            padding: 0.35rem 0.85rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #sk-confirm-ok:hover {
+            background: #d43f38;
+            border-color: #d43f38;
+        }
     </style>
 </head>
 <body>
@@ -245,6 +294,13 @@
     <div class="main-content">
         {{template "content" .}}
     </div>
+    <dialog id="sk-confirm-dialog" aria-labelledby="sk-confirm-message">
+        <p id="sk-confirm-message"></p>
+        <div class="sk-confirm-actions">
+            <button id="sk-confirm-cancel" type="button" autofocus>Cancel</button>
+            <button id="sk-confirm-ok" type="button">Confirm</button>
+        </div>
+    </dialog>
     <div id="sk-toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;min-width:320px;max-width:420px;"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -293,6 +349,41 @@
         new bootstrap.Toast(el).show();
         el.addEventListener('hidden.bs.toast', function() { el.remove(); });
     }
+
+    (function () {
+        var dialog = document.getElementById('sk-confirm-dialog');
+        var msgEl = document.getElementById('sk-confirm-message');
+        var btnOk = document.getElementById('sk-confirm-ok');
+        var btnCancel = document.getElementById('sk-confirm-cancel');
+
+        if (!dialog) return;
+
+        document.addEventListener('htmx:confirm', function (e) {
+            e.preventDefault();
+
+            msgEl.textContent = e.detail.question;
+            dialog.showModal();
+
+            function cleanup() {
+                btnOk.removeEventListener('click', onOk);
+                btnCancel.removeEventListener('click', onCancel);
+                dialog.removeEventListener('cancel', onCancel);
+            }
+            function onOk() {
+                cleanup();
+                dialog.close();
+                e.detail.issueRequest(true);
+            }
+            function onCancel() {
+                cleanup();
+                dialog.close();
+            }
+
+            btnOk.addEventListener('click', onOk);
+            btnCancel.addEventListener('click', onCancel);
+            dialog.addEventListener('cancel', onCancel);
+        });
+    })();
     </script>
     {{template "scripts" .}}
 </body>
