@@ -530,9 +530,7 @@ func ExportAllData() (*models.ExportData, error) {
 		return nil, fmt.Errorf("export categories: %w", err)
 	}
 	for _, c := range cats {
-		data.Categories = append(data.Categories, models.ExportCategory{
-			ID: c.ID, Name: c.Name, CreatedAt: c.CreatedAt,
-		})
+		data.Categories = append(data.Categories, models.ExportCategory(c))
 	}
 
 	var fandoms []models.Fandom
@@ -540,9 +538,7 @@ func ExportAllData() (*models.ExportData, error) {
 		return nil, fmt.Errorf("export fandoms: %w", err)
 	}
 	for _, f := range fandoms {
-		data.Fandoms = append(data.Fandoms, models.ExportFandom{
-			ID: f.ID, Name: f.Name, CreatedAt: f.CreatedAt,
-		})
+		data.Fandoms = append(data.Fandoms, models.ExportFandom(f))
 	}
 
 	var series []models.ConventionSeries
@@ -619,13 +615,13 @@ func ImportAllData(data *models.ExportData) error {
 		}
 
 		for _, c := range data.Categories {
-			row := models.Category{ID: c.ID, Name: c.Name, CreatedAt: c.CreatedAt}
+			row := models.Category(c)
 			if err := tx.Create(&row).Error; err != nil {
 				return fmt.Errorf("insert category %d: %w", c.ID, err)
 			}
 		}
 		for _, f := range data.Fandoms {
-			row := models.Fandom{ID: f.ID, Name: f.Name, CreatedAt: f.CreatedAt}
+			row := models.Fandom(f)
 			if err := tx.Create(&row).Error; err != nil {
 				return fmt.Errorf("insert fandom %d: %w", f.ID, err)
 			}
@@ -680,9 +676,13 @@ func ImportAllData(data *models.ExportData) error {
 		// Reset PostgreSQL sequences so future auto-increment IDs don't collide.
 		if Driver == "postgres" {
 			for _, t := range []struct{ table, col string }{
-				{"categories", "id"}, {"fandoms", "id"}, {"convention_series", "id"},
-				{"products", "id"}, {"conventions", "id"},
-				{"convention_products", "id"}, {"sales", "id"},
+				{"categories", "id"},
+				{"fandoms", "id"},
+				{"convention_series", "id"},
+				{"products", "id"},
+				{"conventions", "id"},
+				{"convention_products", "id"},
+				{"sales", "id"},
 			} {
 				sql := fmt.Sprintf(
 					`SELECT setval(pg_get_serial_sequence('%s', '%s'), COALESCE(MAX(%s), 1)) FROM %s`,

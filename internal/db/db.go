@@ -13,8 +13,10 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
-var Driver string
+var (
+	DB     *gorm.DB
+	Driver string
+)
 
 func Init(driver, dsn string) error {
 	Driver = driver
